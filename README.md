@@ -8,11 +8,9 @@
 
 Для корректной установки после клонирования репозитория скопируйте у себя файл .env.example в файл .env . В нём такие значения:
 
-TELEGRAM_TOKEN="Токен бота для animal.js"
+TOKEN="Токен бота для animal.js"
 
-TELEGRAM_TOKEN_FRIDAY="Токен бота для friday.js"
-
-TELEGRAM_TOKEN_QUOTES_FATHERS="Токен бота для quotes.js"
+TELEGRAM_TOKEN_DEV="Токен бота для разработки"
 
 REDDIT_USER_NAME="RedditUserName"
 
