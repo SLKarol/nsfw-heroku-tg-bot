@@ -10,11 +10,18 @@ const { sendBOR } = require("../lib/bashOrg");
 
 const router = express.Router();
 
+/**
+ * Веб-хук для бота
+ */
 router.post("/webhook", (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
 
+/**
+ * Служба отправки пятничного материала. Если в параметре records ничего не передавать,
+ * То будет запрос к reddit
+ */
 router.post("/sendFriday", (req, res) => {
   const { records = [] } = req.body;
   sendFriday(bot, Array.isArray(records) ? records : [])
@@ -22,12 +29,18 @@ router.post("/sendFriday", (req, res) => {
     .catch(() => res.sendStatus(403));
 });
 
+/**
+ * Служба отправки видео
+ */
 router.post("/sendFridayVideo", (req, res) =>
   sendFridayVideo(bot)
     .then(() => res.sendStatus(200))
     .catch(() => res.sendStatus(403))
 );
 
+/**
+ * Служба отправки цитат из БОР (вызывается из UI)
+ */
 router.post(
   "/sendBOR",
   asyncHandler(async (req, res) => {
@@ -48,6 +61,9 @@ router.post(
   })
 );
 
+/**
+ * Возвращает записи для публикации
+ */
 router.post(
   "/getNSFW",
   asyncHandler(async (req, res) => {
