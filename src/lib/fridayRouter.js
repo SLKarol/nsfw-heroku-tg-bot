@@ -30,14 +30,12 @@ class FridayRouter extends AppBotRouter {
    * @param {Response} res
    */
   sendFriday = (req, res) => {
-    //* Проверить, как оно сработает:
-    // res.sendStatus(200);
     const { records = [] } = req.body;
     const prChatIds = this.getChatForMailing();
     const prFridayMessages = !records.length
       ? this.bot.reddit.getNewRecords()
       : new Promise((resolve, reject) => resolve(records));
-    Promise.all([prChatIds, prFridayMessages])
+    return Promise.all([prChatIds, prFridayMessages])
       .then(([chatIds, records]) => {
         const fridayMessages = this.bot.reddit.getPartsMessage(records);
         // Защититься от повторного запроса
