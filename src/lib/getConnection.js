@@ -8,6 +8,8 @@ let conn = null;
 
 /**
  * Возвращает подключение к БД
+ * todo Как в DI перенести, чтобы было согласно документации heroku я пока ещё не придумал
+ * @return {Promise<mongoose.Connection>}
  */
 const getConnection = async () => {
   if (conn == null) {

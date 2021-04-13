@@ -1,17 +1,24 @@
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
-const fetch = require("node-fetch");
 const asyncHandler = require("express-async-handler");
 
 const PORT = process.env.PORT || 5000;
-const botFridayRoutes = require("./src/routes/botFriday");
+const TOKEN = require("./src/const/token.js");
+
+const NSFWBot = require("./src/bots/NSFWBot");
+const Reddit = require("./src/lib/reddit");
+const FridayRouter = require("./src/lib/fridayRouter");
+
 const authMiddleware = require("./src/middleware/auth");
 const authRoutes = require("./src/routes/auth");
 const getBashContent = require("./src/controllers/bash");
 const isFriDay = require("./src/lib/isFriDay");
 
 const app = express();
+const reddit = new Reddit();
+const nsfwBot = new NSFWBot(TOKEN, reddit);
+
 // CORS
 app.use(cors());
 app.use(express.json()); // for parsing application/json
@@ -26,7 +33,8 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-app.use("/api/botFriday", botFridayRoutes);
+const fridayRouer = new FridayRouter(nsfwBot, "/api/botFriday");
+app.use("/api/botFriday", fridayRouer.router);
 app.use("/api/auth", authRoutes);
 app.post("/api/bashOrgs", getBashContent);
 
