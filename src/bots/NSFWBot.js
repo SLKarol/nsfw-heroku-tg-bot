@@ -1,7 +1,8 @@
+const delay = require("@stanislavkarol/delay");
+
 const COMMANDS = require("../const/commands");
 
 const TelegramBot = require("../lib/telegramBot");
-const delay = require("../lib/delay");
 
 /**
  * @typedef {import('../lib/reddit')} Reddit

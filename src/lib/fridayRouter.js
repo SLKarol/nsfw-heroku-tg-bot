@@ -1,3 +1,5 @@
+const delay = require("@stanislavkarol/delay");
+
 const AppBotRouter = require("./appBotRouter");
 
 /**
@@ -57,7 +59,7 @@ class FridayRouter extends AppBotRouter {
   sendFridayVideo = (req, res) => {
     const prChatIds = this.getChatForMailing();
     const prFridayMessages = this.bot.reddit.getNewVideoRecords();
-    Promise.all([prChatIds, prFridayMessages])
+    return Promise.all([prChatIds, prFridayMessages])
       .then(([chatIds, list]) => {
         // Защититься от повторного запроса
         const arrayIds = Array.from(new Set(chatIds));
