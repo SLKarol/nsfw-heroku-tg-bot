@@ -5,6 +5,7 @@
   "main": "bot.js",
   "dependencies": {
     "@stanislavkarol/delay": "^1.0.0",
+    "@stanislavkarol/get-bash-im-rss": "^1.1.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
@@ -19,8 +20,7 @@
     "node-html-parser": "^3.1.4",
     "node-reddit-js": "0.0.11",
     "node-telegram-bot-api": "^0.52.0",
-    "probe-image-size": "^7.0.1",
-    "turndown": "^7.0.0"
+    "probe-image-size": "^7.0.1"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

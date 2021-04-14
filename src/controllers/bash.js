@@ -1,12 +1,9 @@
-const getListBashOrg = require("../lib/bashOrg");
+const getListBashOrg = require("@stanislavkarol/get-bash-im-rss");
 
 module.exports = function (req, res, next) {
-  Promise.all([getListBashOrg(), getListBashOrg("https://ithappens.me/rss/")])
-    .then(([bashOrg, itHappens]) => {
-      res.json({
-        bashOrg,
-        itHappens,
-      });
+  getListBashOrg()
+    .then((list) => {
+      res.json(list);
       return next();
     })
     .catch((err) => {

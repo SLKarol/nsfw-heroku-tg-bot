@@ -18,8 +18,8 @@ class Anecdotes extends Component {
   };
   componentDidMount() {
     getListBashOrg()
-      .then(({ bashOrg, itHappens }) => {
-        this.setState({ list: [...bashOrg, ...itHappens], busy: false });
+      .then((list) => {
+        this.setState({ list, busy: false });
       })
       .catch((err) => {
         this.setState({
