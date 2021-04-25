@@ -12,15 +12,15 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
-    "express-validator": "^6.10.0",
+    "express-validator": "^6.10.1",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.6",
-    "mongoose": "^5.12.3",
+    "mongoose": "^5.12.5",
     "node-fetch": "^2.6.1",
-    "node-html-parser": "^3.1.4",
+    "node-html-parser": "^3.2.0",
     "node-reddit-js": "0.0.11",
     "node-telegram-bot-api": "^0.52.0",
-    "probe-image-size": "^7.0.1"
+    "probe-image-size": "^7.1.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
