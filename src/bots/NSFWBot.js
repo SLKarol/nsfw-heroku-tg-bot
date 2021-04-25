@@ -17,9 +17,8 @@ class NSFWBot extends TelegramBot {
    * @param {string} token
    * @param {Reddit} reddit
    * @param {ManageSubscribe} manageSubscribe
-   * @param {string} baseUrl
    */
-  constructor(token, reddit, baseUrl) {
+  constructor(token, reddit) {
     super({
       token,
       commands: COMMANDS,

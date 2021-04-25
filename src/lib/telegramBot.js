@@ -2,6 +2,14 @@ const NodeTelegramBot = require("node-telegram-bot-api");
 
 const ManageSubscribe = require("./manageSubscribe");
 
+/**
+ * @typedef {Object} ParsedCommandText
+ * @property {string} text - Введенный текст
+ * @property {string|undefined} command - Введённая команда
+ * @property {string|undefined} bot - Бот, к которому обратились
+ * @property {Array|undefined} commandArgs - Аргументы к введённой команде
+ */
+
 const regexUserText = /^\/([^@\s]+)@?(?:(\S+)|)\s?([\s\S]+)?$/i;
 
 const OPTIONS =
@@ -14,7 +22,7 @@ const FUNNY_REPLY_TEXT =
  * Служит базовым классом для ботов.
  * Содержит в себе члены: bot, manageSubscribe.
  * Может сделать подсказку для команд.
- * В метод assignCommands нужно принести список команд и тогда боь научится их выполнять.
+ * В метод assignCommands нужно принести список команд и тогда бот научится их выполнять.
  */
 class TelegramBot {
   /**
@@ -37,15 +45,16 @@ class TelegramBot {
   /**
    * Назначить справку для команд бота
    * @param {NodeTelegramBot.BotCommand[]} listCommand
+   * @returns {Promise<boolean>}
    */
   setCommandHelp(listCommand) {
-    this.bot.setMyCommands(listCommand);
+    return this.bot.setMyCommands(listCommand);
   }
 
   /**
-   * Разбор сообщения на: кманда, бот, аргументы
+   * Разбор сообщения на: команда, бот, аргументы
    * @param {string} text
-   * @returns
+   * @returns {ParsedCommandText} Разобранный текст
    */
   #parseUserText(text) {
     const parts = regexUserText.exec(text);
