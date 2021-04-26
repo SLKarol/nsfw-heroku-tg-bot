@@ -1,4 +1,5 @@
 const delay = require("@stanislavkarol/delay");
+const asyncHandler = require("express-async-handler");
 
 const AppBotRouter = require("./appBotRouter");
 
@@ -31,15 +32,21 @@ class FridayRouter extends AppBotRouter {
    * @param {Request} req
    * @param {Response} res
    */
-  sendFriday = (req, res) => {
+  sendFriday = asyncHandler(async (req, res) => {
     const { records = [] } = req.body;
+    // Получить Название канала
+    const infoChannel = await this.bot.db.getRandomChannel();
+
     const prChatIds = this.getChatForMailing();
     const prFridayMessages = !records.length
-      ? this.bot.reddit.getNewRecords()
+      ? this.bot.reddit.getNewRecords({ limit: 20, name: infoChannel.name })
       : new Promise((resolve, reject) => resolve(records));
     return Promise.all([prChatIds, prFridayMessages])
       .then(([chatIds, records]) => {
-        const fridayMessages = this.bot.reddit.getPartsMessage(records);
+        const fridayMessages = this.bot.createAlbums(
+          records,
+          this.bot.reddit.mapRedditForTelegram
+        );
         // Защититься от повторного запроса
         const promises = chatIds.map((chatId) =>
           this.bot.sendFridayContent({ chatId, fridayMessages })
@@ -47,7 +54,7 @@ class FridayRouter extends AppBotRouter {
         return Promise.all(promises);
       })
       .then(() => res.sendStatus(200));
-  };
+  });
 
   /**
    * Отправить всем подписчикам пятничную видео-рассылку.
@@ -58,7 +65,7 @@ class FridayRouter extends AppBotRouter {
    */
   sendFridayVideo = (req, res) => {
     const prChatIds = this.getChatForMailing();
-    const prFridayMessages = this.bot.reddit.getNewVideoRecords();
+    const prFridayMessages = this.bot.reddit.getNewVideoRecords({ limit: 20 });
     return Promise.all([prChatIds, prFridayMessages])
       .then(([chatIds, list]) => {
         // Защититься от повторного запроса
@@ -127,7 +134,7 @@ class FridayRouter extends AppBotRouter {
     // Определиться с количеством записей
     const count = +limit;
     this.bot.reddit
-      .getNewRecords(count === NaN ? 20 : count > 50 ? 50 : count)
+      .getNewRecords({ limit: count === NaN ? 20 : count > 50 ? 50 : count })
       .then((records) => {
         res.status(200).json({ records });
       });

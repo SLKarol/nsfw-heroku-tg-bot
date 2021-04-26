@@ -15,17 +15,26 @@ class Reddit {
     password: process.env.REDDIT_PASSWORD,
   };
   #client = null;
+
+  /**
+   * Сущность для работы с каналами reddit
+   */
   constructor() {
     this.#client = new Client(this.#config);
   }
   /**
    * Получает новые записи NFSW
-   * @returns {Promise}
+   * @param {Object} props
+   * @param {number} props.limit Максимальное количество фото/видео
+   * @param {string} props.name имя канала
+   * @returns {Promise<Array>}
    */
-  async getNewRecords(limit = 20) {
-    const nsfwResponse = await this.#client.reddit.r.nsfw.new.get({
-      data: { limit },
-    });
+  async getNewRecords({ limit = 20, name = "nsfw" }) {
+    const nsfwResponse = await this.#client
+      .reddit(`r/${name.toLowerCase()}`)
+      .new.get({
+        data: { limit },
+      });
     const {
       data: { children },
     } = nsfwResponse;
@@ -105,36 +114,20 @@ class Reddit {
   /**
    * Подготовка для отправки в телеграм
    */
-  #mapRedditForTelegram = (reddit) => ({
+  mapRedditForTelegram = (reddit) => ({
     type: reddit.is_video ? "video" : "photo",
     media: reddit.url,
     caption: reddit.title,
   });
 
   /**
-   * Группировка изображений для создания отправки в телеграмм
-   * @param {Array} friDay Массив изображений
-   * @returns {Array}
-   */
-  getPartsMessage(friDay) {
-    //массив, в который будет выведен результат.
-    let fridayMessages = [];
-    const size = 10;
-    // Получить массив из частей по size штук
-    for (let i = 0; i < Math.ceil(friDay.length / size); i++) {
-      fridayMessages[i] = friDay
-        .slice(i * size, i * size + size)
-        // Подготовить эти 10 записей к отправке в телеграм
-        .map(this.#mapRedditForTelegram);
-    }
-    return fridayMessages;
-  }
-
-  /**
    * Получает новые видеозаписи NFSW
+   * @param {Object} props
+   * @param {number} props.limit Максимальное количество фото/видео
+   * @param {string} props.name имя канала
    * @returns {Promise<Array>}
    */
-  async getNewVideoRecords() {
+  async getNewVideoRecords({ limit = 20, name = "tikhot" }) {
     const nsfwResponse = await this.#client.reddit.r.nsfw.new.get();
     const {
       data: { children },

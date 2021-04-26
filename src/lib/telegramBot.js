@@ -44,11 +44,16 @@ class TelegramBot {
 
   /**
    * Назначить справку для команд бота
-   * @param {NodeTelegramBot.BotCommand[]} listCommand
+   * @param {Array} listCommand
    * @returns {Promise<boolean>}
    */
   setCommandHelp(listCommand) {
-    return this.bot.setMyCommands(listCommand);
+    return this.bot.setMyCommands(
+      listCommand.filter((cmd) => {
+        const { hint = false } = cmd;
+        return hint;
+      })
+    );
   }
 
   /**
@@ -105,6 +110,27 @@ class TelegramBot {
     const re = replies[Math.floor(Math.random() * replies.length)];
     return `${re}
   _${message}_`;
+  }
+
+  /**
+   * Группировка изображений для создания альбомов, пригодных для отправки в телеграм.
+   * По сути своей список изображений разбивается на 10 частей, маппится к телеграм-альбому
+   * @param {Array} friDay Массив изображений/видео
+   * @param {Function} callbackMap Функция-мап, которая преобразует изображения в формат телеграм-медиа
+   * @returns {Array} Медиа-альбомы
+   */
+  createAlbums(friDay, callbackMap) {
+    //массив, в который будет выведен результат.
+    let fridayMessages = [];
+    const size = 10;
+    // Получить массив из частей по size штук
+    for (let i = 0; i < Math.ceil(friDay.length / size); i++) {
+      fridayMessages[i] = friDay
+        .slice(i * size, i * size + size)
+        // Подготовить эти 10 записей к отправке в телеграм
+        .map(callbackMap);
+    }
+    return fridayMessages;
   }
 }
 module.exports = TelegramBot;

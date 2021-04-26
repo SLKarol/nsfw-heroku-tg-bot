@@ -6,6 +6,7 @@ const TelegramBot = require("../lib/telegramBot");
 
 /**
  * @typedef {import('../lib/reddit')} Reddit
+ * @typedef {import('../lib/modelNsfw')} ModelNsfw
  */
 
 /**
@@ -16,14 +17,15 @@ class NSFWBot extends TelegramBot {
    * Телеграм-бот для reddit/nsfw
    * @param {string} token
    * @param {Reddit} reddit
-   * @param {ManageSubscribe} manageSubscribe
+   * @param {ModelNsfw} db - База данных
    */
-  constructor(token, reddit) {
+  constructor(token, reddit, db) {
     super({
       token,
       commands: COMMANDS,
       mailingName: "friday",
     });
+    this.db = db;
     this.reddit = reddit;
     this.#setHandleCommands();
   }
@@ -57,6 +59,10 @@ class NSFWBot extends TelegramBot {
         command: "help",
         handler: this.helpCommand.bind(this),
       },
+      {
+        command: "channels",
+        handler: this.listChannelsCommand.bind(this),
+      },
     ];
     this.assignCommands(commands);
   }
@@ -64,13 +70,26 @@ class NSFWBot extends TelegramBot {
   /**
    * Обработка команды бота /friday
    * @param {string|number} chatId ID Чата
+   * @param {TelegramBot.ParsedCommandText} parsedMessage Команда боту
    */
-  fridayCommand(chatId) {
+  async fridayCommand(chatId, parsedMessage) {
+    const requestChannelInfo = await this.#parseChanelFromCommand(
+      parsedMessage
+    );
+    if (!requestChannelInfo.correct) {
+      return this.bot.sendMessage(chatId, "Увы, введён незнакомый канал.");
+    }
+    const { name } = requestChannelInfo;
     this.bot
-      .sendMessage(chatId, "Прогони тоску и печаль со своего лица!")
-      .then(() => this.reddit.getNewRecords())
+      .sendMessage(chatId, `Канал *${name}* сообщает ...`, {
+        parse_mode: "Markdown",
+      })
+      .then(() => this.reddit.getNewRecords({ name, limit: 20 }))
       .then((records) => {
-        const fridayMessages = this.reddit.getPartsMessage(records);
+        const fridayMessages = this.createAlbums(
+          records,
+          this.reddit.mapRedditForTelegram
+        );
         return this.sendFridayContent({ chatId, fridayMessages });
       })
       .then(() => this.bot.sendMessage(chatId, "Надеюсь, Вам понравилось."))
@@ -174,12 +193,23 @@ ${e}`
    * Обработка команды бота /video
    * @param {string|number} chatId ID канала
    * @param {TelegramBot} bot Бот
+   * @param {TelegramBot.ParsedCommandText} parsedMessage Команда боту
    */
-  videoCommand(chatId) {
+  async videoCommand(chatId, parsedMessage) {
+    const requestChannelInfo = await this.#parseChanelFromCommand(
+      parsedMessage,
+      true
+    );
+    if (!requestChannelInfo.correct) {
+      return this.bot.sendMessage(chatId, "Увы, введён незнакомый канал.");
+    }
     const { bot } = this;
+    const { name } = requestChannelInfo;
     bot
-      .sendMessage(chatId, "Поиск видео...")
-      .then(() => this.reddit.getNewVideoRecords())
+      .sendMessage(chatId, `Канал *${name}* сообщает ...`, {
+        parse_mode: "Markdown",
+      })
+      .then(() => this.reddit.getNewVideoRecords({ name, limit: 10 }))
       .then((list) => {
         if (!list.length) {
           return bot.sendMessage(chatId, "Новых видео не найдено.");
@@ -240,6 +270,47 @@ ${e}`
     return bot.sendMessage(chatId, helpText, {
       parse_mode: "Markdown",
     });
+  }
+
+  listChannelsCommand(chatId) {
+    const { bot } = this;
+    this.db
+      .getListChannels()
+      .then((channels) => {
+        let message = channels.reduce((acc, record) => {
+          acc += `${record.name} _(Видео: ${
+            record.onlyVideo ? "Да" : "Нет"
+          })_\n`;
+          return acc;
+        }, "");
+        message +=
+          "\nЕсли содержит видео, значит контент может быть тем, кому за 21";
+        return bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+      })
+      .catch((err) => console.error(err));
+  }
+
+  /**
+   * Получить имя канала
+   * @param {TelegramBot.ParsedCommandText} parsedMessage Команда
+   * @param {boolean?} withVideo Канал использует видео?
+   */
+  async #parseChanelFromCommand(parsedMessage, withVideo = false) {
+    const { commandArgs = [] } = parsedMessage;
+    let requestChannelInfo = { name: "", correct: false };
+    // Проверка корректности названия канала
+    if (commandArgs.length) {
+      requestChannelInfo.name = commandArgs[0];
+      requestChannelInfo.correct = await this.db.checkCorrectChannel(
+        requestChannelInfo.name
+      );
+    } else {
+      // Если названия нет, то нужно получить случайное
+      const randomChannel = await this.db.getRandomChannel(withVideo);
+      requestChannelInfo.name = randomChannel.name;
+      requestChannelInfo.correct = true;
+    }
+    return requestChannelInfo;
   }
 }
 module.exports = NSFWBot;

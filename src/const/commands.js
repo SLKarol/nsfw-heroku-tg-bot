@@ -1,11 +1,16 @@
 const COMMANDS = [
   {
     command: "friday",
-    description: "Показать пятничную подборку",
+    description:
+      "Показать пятничную подборку. Можно указать канал, откуда брать данные для рассылки",
   },
   {
     command: "video",
     description: "Найти и показать видеоконтент",
+  },
+  {
+    command: "channels",
+    description: "Показать список каналов-источников рассылки",
   },
   {
     command: "subscribe",
@@ -18,6 +23,7 @@ const COMMANDS = [
   {
     command: "help",
     description: "Показать справку",
+    hint: true,
   },
   {
     command: "quit",

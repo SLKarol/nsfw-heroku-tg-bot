@@ -9,6 +9,7 @@ const TOKEN = require("./src/const/token.js");
 const NSFWBot = require("./src/bots/NSFWBot");
 const Reddit = require("./src/lib/reddit");
 const FridayRouter = require("./src/lib/fridayRouter");
+const ModelNsfw = require("./src/lib/modelNsfw");
 
 const authMiddleware = require("./src/middleware/auth");
 const authRoutes = require("./src/routes/auth");
@@ -16,8 +17,9 @@ const getBashContent = require("./src/controllers/bash");
 const isFriDay = require("./src/lib/isFriDay");
 
 const app = express();
+const db = new ModelNsfw();
 const reddit = new Reddit();
-const nsfwBot = new NSFWBot(TOKEN, reddit);
+const nsfwBot = new NSFWBot(TOKEN, reddit, db);
 
 // CORS
 app.use(cors());
