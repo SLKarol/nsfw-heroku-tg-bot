@@ -24,13 +24,15 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
+    "mocha": "^8.3.2",
     "nodemon": "^2.0.7"
   },
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon src/bot.js",
     "start": "node index.js",
     "deploy": "git push heroku master",
-    "heroku-prebuild": "cd client && npm install && npm run build"
+    "heroku-prebuild": "cd client && npm install && npm run build",
+    "test": "mocha"
   },
   "keywords": [],
   "author": "",

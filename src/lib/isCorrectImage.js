@@ -6,6 +6,7 @@ const probe = require("probe-image-size");
  * @returns {boolean} Корректно для отправки
  */
 async function isCorrectImage(url) {
+  if (!url.match(/.(jpg|jpeg|png|gif)$/i)) return false;
   let re = false;
   try {
     const { width, height, length } = await probe(url);

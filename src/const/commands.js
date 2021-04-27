@@ -6,7 +6,8 @@ const COMMANDS = [
   },
   {
     command: "video",
-    description: "Найти и показать видеоконтент",
+    description:
+      "Найти и показать видеоконтент. В этой версии будет отправляться без звука.",
   },
   {
     command: "channels",

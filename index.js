@@ -8,7 +8,7 @@ const TOKEN = require("./src/const/token.js");
 
 const NSFWBot = require("./src/bots/NSFWBot");
 const Reddit = require("./src/lib/reddit");
-const FridayRouter = require("./src/lib/fridayRouter");
+const FridayRouter = require("./src/routes/fridayRouter");
 const ModelNsfw = require("./src/lib/modelNsfw");
 
 const authMiddleware = require("./src/middleware/auth");
@@ -23,8 +23,8 @@ const nsfwBot = new NSFWBot(TOKEN, reddit, db);
 
 // CORS
 app.use(cors());
-app.use(express.json()); // for parsing application/json
-app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(express.json({ limit: "50mb" })); // for parsing application/json
+app.use(express.urlencoded({ extended: true, limit: "50mb" })); // for parsing application/x-www-form-urlencoded
 // Звено для авторизации
 app.use(authMiddleware);
 

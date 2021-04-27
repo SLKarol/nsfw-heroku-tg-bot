@@ -40,15 +40,13 @@ class ModelNsfw {
 
   /**
    * Получить случайный канал
-   * @param {boolean?} withVideo Использовать каналы с видео?
    * @returns {Promise<Object>}
    */
-  async getRandomChannel(withVideo = false) {
-    const filter = { withVideo };
+  async getRandomChannel() {
     const db = await getDbConnection();
     const channels = await db
       .collection("nsfwChannels")
-      .aggregate([{ $match: filter }, { $sample: { size: 1 } }])
+      .aggregate([{ $sample: { size: 1 } }])
       .toArray();
     return channels[0];
   }

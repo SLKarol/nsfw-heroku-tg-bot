@@ -1,7 +1,7 @@
 const delay = require("@stanislavkarol/delay");
 const asyncHandler = require("express-async-handler");
 
-const AppBotRouter = require("./appBotRouter");
+const AppBotRouter = require("../lib/appBotRouter");
 
 /**
  * @typedef {import('../bots/NSFWBot.js')} NSFWBot
@@ -23,6 +23,7 @@ class FridayRouter extends AppBotRouter {
     this.router.post("/sendFridayVideo", this.sendFridayVideo);
     this.router.post("/sendBOR", this.sendBOR);
     this.router.post("/getNSFW", this.getNSFW);
+    this.router.post("/testVideo", this.testVideo);
   }
 
   /**
@@ -33,14 +34,14 @@ class FridayRouter extends AppBotRouter {
    * @param {Response} res
    */
   sendFriday = asyncHandler(async (req, res) => {
-    const { records = [] } = req.body;
+    const { records = [], name = "nsfw" } = req.body;
     // Получить Название канала
-    const infoChannel = await this.bot.db.getRandomChannel();
-
+    const infoChannel = await this.bot.getChannelInfo({ commandArgs: [name] });
+    // Получить ID Чатов для рассылки
     const prChatIds = this.getChatForMailing();
     const prFridayMessages = !records.length
       ? this.bot.reddit.getNewRecords({ limit: 20, name: infoChannel.name })
-      : new Promise((resolve, reject) => resolve(records));
+      : new Promise((resolve) => resolve(records));
     return Promise.all([prChatIds, prFridayMessages])
       .then(([chatIds, records]) => {
         const fridayMessages = this.bot.createAlbums(
@@ -63,9 +64,21 @@ class FridayRouter extends AppBotRouter {
    * @param {Request} req
    * @param {Response} res
    */
-  sendFridayVideo = (req, res) => {
+  sendFridayVideo = asyncHandler(async (req, res) => {
+    const { records = [], name = "nsfw", filterContent = true } = req.body;
+    // Получить Название канала
+    const infoChannel = await this.bot.getChannelInfo({ commandArgs: [name] });
+    // Получить сообщения для рассылки
+    const prFridayMessages = !records.length
+      ? this.bot.reddit.getNewVideoRecords({
+          limit: 10,
+          name: infoChannel.name,
+          filterContent,
+        })
+      : new Promise((resolve) => resolve(records));
+    // Получить ID Чатов для рассылки
     const prChatIds = this.getChatForMailing();
-    const prFridayMessages = this.bot.reddit.getNewVideoRecords({ limit: 20 });
+
     return Promise.all([prChatIds, prFridayMessages])
       .then(([chatIds, list]) => {
         // Защититься от повторного запроса
@@ -78,7 +91,7 @@ class FridayRouter extends AppBotRouter {
         return Promise.all(promises);
       })
       .then(() => res.sendStatus(200));
-  };
+  });
 
   sendBOR = (req, res) => {
     if (!req.isAuth) {
@@ -137,6 +150,29 @@ class FridayRouter extends AppBotRouter {
       .getNewRecords({ limit: count === NaN ? 20 : count > 50 ? 50 : count })
       .then((records) => {
         res.status(200).json({ records });
+      });
+  };
+  testVideo = (req, res) => {
+    const { video } = req.body;
+    // const a = toArrayBuffer(video);
+    // var buffer = Buffer.from(new Uint8Array(video));
+    // console.log("a.length :>> ", a);
+    // console.log("video :>> ", video);
+    // const g = toArrayBuffer(video);
+    // const buffer = Buffer.from(g);
+    // console.log("g :>> ", g);
+    // res.status(200).json({ message: "Отправлено", success: true });
+    // const b64encoded = Buffer.from(video);
+    const personUint8Array = Uint8Array.from(video);
+    const buffer = Buffer.from(personUint8Array);
+    console.log("b :>> ", buffer);
+    this.bot.bot
+      .sendVideo(570986591, buffer)
+      .then((t) => {
+        res.status(200);
+      })
+      .catch((e) => {
+        res.status(401);
       });
   };
 }

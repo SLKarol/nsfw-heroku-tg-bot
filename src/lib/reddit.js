@@ -38,7 +38,9 @@ class Reddit {
     const {
       data: { children },
     } = nsfwResponse;
-    const filteredRecords = this.#filterContent(this.#prepareRecords(children));
+    const filteredRecords = this.#filterContent(
+      this.#prepareRecords(children, true)
+    );
     const records = await this.#checkCorrectImages(filteredRecords);
     return records.reduce((acc, record) => {
       if (record.correct) {
@@ -66,24 +68,23 @@ class Reddit {
    * Фильтровать по содержимому:
    * По заголовку и по расширению
    * @param {Array} data
+   * @param {boolean?} checkUrlImage проверять, соответствует ли url типу "Изображение"
    * @returns {Array}
    */
-  #filterContent(data) {
+  #filterContent(data, checkUrlImage = false) {
     const forbiddenWords = FORBIDDEN_WORDS.toLowerCase().split(/[ ,]+/);
     // Отфильтровать
     return data.filter((record) => {
       // Исключить из всего этого видео. Я пока не умею его забирать
-      const { media, title, url, is_video } = record;
+      const { title, url } = record;
       const tmpLowerCase = title.toLowerCase();
-      const notForbidden = !forbiddenWords.some(
+      let condition = !forbiddenWords.some(
         (word) => tmpLowerCase.indexOf(word) > -1
       );
-      return (
-        !media &&
-        !!url.match(/.(jpg|jpeg|png|gif)$/i) &&
-        notForbidden &&
-        !is_video
-      );
+      if (checkUrlImage) {
+        condition = condition && !!url.match(/.(jpg|jpeg|png|gif)$/i);
+      }
+      return condition;
     });
   }
 
@@ -127,50 +128,55 @@ class Reddit {
    * @param {string} props.name имя канала
    * @returns {Promise<Array>}
    */
-  async getNewVideoRecords({ limit = 20, name = "tikhot" }) {
-    const nsfwResponse = await this.#client.reddit.r.nsfw.new.get();
+  async getNewVideoRecords({
+    limit = 10,
+    name = "tikhot",
+    filterContent = true,
+  }) {
+    const nsfwResponse = await this.#client
+      .reddit(`r/${name.toLowerCase()}`)
+      .new.get({
+        data: { limit },
+      });
     const {
       data: { children },
     } = nsfwResponse;
-    const forbiddenWords = FORBIDDEN_WORDS.toLowerCase().split(/[ ,]+/);
-    const filtered = children.reduce((acc, record) => {
-      const {
-        data: { title, url, media },
-      } = record;
-      const tmpLowerCase = title.toLowerCase();
-      const notForbidden = !forbiddenWords.some(
-        (word) => tmpLowerCase.indexOf(word) > -1
-      );
-      if (
-        (!!url.match(/.(gifv)$/i) ||
-          (media !== null && media?.type === "redgifs.com")) &&
-        notForbidden
-      ) {
-        acc.push({ title, url });
-      }
-      return acc;
-    }, []);
-    return await this.#expandVideoSrc(filtered);
+    const recordsWork = filterContent
+      ? this.#filterContent(this.#prepareRecords(children))
+      : this.#prepareRecords(children);
+    const promises = recordsWork.reduce(this.__getVideoUrl, []);
+    const re = await Promise.all(promises);
+    return re.filter((i) => i !== null);
   }
 
   /**
-   * Получение ссылок видео для рассылки
-   * @param {Array} videoRecords
+   * Выдаёт массив промисов для получения информации о видео
+   * @param {Array} listPromises
+   * @param {Object} record Запись из reddit
+   * @param {string} record.url Ссылка на видео
+   * @param {string} record.title Название видео
+   * @param {Object} record.media Скомбинированная инфа о видео
    * @return {Promise<Array>} videoRecords
    */
-  #expandVideoSrc(videoRecords) {
-    const promises = videoRecords.reduce((acc, record) => {
-      const { url, title } = record;
-      // Обработка формата gifv
-      if (!!url.match(/.(gifv)$/i)) {
-        acc.push(
-          new Promise((resolve) =>
-            resolve({ url: url.replace(".gifv", ".mp4"), title })
-          )
-        );
-        return acc;
-      }
-      acc.push(
+  __getVideoUrl(listPromises, record) {
+    const { url, title, media } = record;
+    // Это gifv?
+    if (!!url.match(/.(gifv)$/i)) {
+      listPromises.push(
+        new Promise((resolve) =>
+          resolve({ url: url.replace(".gifv", ".mp4"), title })
+        )
+      );
+      return listPromises;
+    }
+    // В остальных случаях должен быть объект media
+    if (!media) {
+      return listPromises;
+    }
+    // Это видео типа redgifs.com?
+    const { type = "" } = media;
+    if (type === "redgifs.com") {
+      listPromises.push(
         new Promise((resolve) =>
           fetch(record.url).then((response) =>
             response.text().then((htmlContent) => {
@@ -187,12 +193,23 @@ class Reddit {
           )
         )
       );
-      return acc;
-    }, []);
-
-    return Promise.all(promises)
-      .then((urls) => urls.filter((u) => u !== null))
-      .catch(() => []);
+      return listPromises;
+    }
+    // Это обычное видео?
+    const fallbackUrl = media?.reddit_video?.fallback_url;
+    if (fallbackUrl) {
+      const urlVideo = fallbackUrl.split("?")[0];
+      const fileName = urlVideo.substring(urlVideo.lastIndexOf("/") + 1);
+      if (!fileName.startsWith("DASH_")) {
+        return listPromises;
+      }
+      const urlAudio = urlVideo.replace(fileName, "DASH_audio.mp4");
+      listPromises.push(
+        new Promise((resolve) => resolve({ url: urlVideo, title, urlAudio }))
+      );
+      return listPromises;
+    }
+    return listPromises;
   }
 }
 module.exports = Reddit;

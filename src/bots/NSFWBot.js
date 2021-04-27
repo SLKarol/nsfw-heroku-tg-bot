@@ -73,26 +73,32 @@ class NSFWBot extends TelegramBot {
    * @param {TelegramBot.ParsedCommandText} parsedMessage Команда боту
    */
   async fridayCommand(chatId, parsedMessage) {
-    const requestChannelInfo = await this.#parseChanelFromCommand(
-      parsedMessage
-    );
+    const requestChannelInfo = await this.getChannelInfo(parsedMessage);
     if (!requestChannelInfo.correct) {
       return this.bot.sendMessage(chatId, "Увы, введён незнакомый канал.");
     }
     const { name } = requestChannelInfo;
+    // Получить параметр с количеством записей:
+    const limit = this.#getMaxCountRecords(parsedMessage);
     this.bot
       .sendMessage(chatId, `Канал *${name}* сообщает ...`, {
         parse_mode: "Markdown",
       })
-      .then(() => this.reddit.getNewRecords({ name, limit: 20 }))
+      .then(() => this.reddit.getNewRecords({ name, limit }))
       .then((records) => {
+        if (!records.length) {
+          return this.bot.sendMessage(
+            chatId,
+            "На канале не найдено материалов."
+          );
+        }
         const fridayMessages = this.createAlbums(
           records,
           this.reddit.mapRedditForTelegram
         );
         return this.sendFridayContent({ chatId, fridayMessages });
       })
-      .then(() => this.bot.sendMessage(chatId, "Надеюсь, Вам понравилось."))
+      .then(() => this.bot.sendMessage(chatId, "На этом у меня всё."))
       .catch((err) => console.error(err));
   }
 
@@ -196,21 +202,27 @@ ${e}`
    * @param {TelegramBot.ParsedCommandText} parsedMessage Команда боту
    */
   async videoCommand(chatId, parsedMessage) {
-    const requestChannelInfo = await this.#parseChanelFromCommand(
-      parsedMessage,
-      true
-    );
+    const requestChannelInfo = await this.getChannelInfo(parsedMessage);
     if (!requestChannelInfo.correct) {
       return this.bot.sendMessage(chatId, "Увы, введён незнакомый канал.");
     }
     const { bot } = this;
     const { name } = requestChannelInfo;
+    // Получить параметр с количеством записей:
+    const limit = this.#getMaxCountRecords(parsedMessage, 10);
+
     bot
       .sendMessage(chatId, `Канал *${name}* сообщает ...`, {
         parse_mode: "Markdown",
       })
-      .then(() => this.reddit.getNewVideoRecords({ name, limit: 10 }))
+      .then(() =>
+        this.reddit.getNewVideoRecords({
+          name,
+          limit,
+        })
+      )
       .then((list) => {
+        // const listVideos=list.filter(i=>i!==null);
         if (!list.length) {
           return bot.sendMessage(chatId, "Новых видео не найдено.");
         }
@@ -272,6 +284,10 @@ ${e}`
     });
   }
 
+  /**
+   * Вывести список каналов
+   * @param {string|number} chatId
+   */
   listChannelsCommand(chatId) {
     const { bot } = this;
     this.db
@@ -293,9 +309,8 @@ ${e}`
   /**
    * Получить имя канала
    * @param {TelegramBot.ParsedCommandText} parsedMessage Команда
-   * @param {boolean?} withVideo Канал использует видео?
    */
-  async #parseChanelFromCommand(parsedMessage, withVideo = false) {
+  async getChannelInfo(parsedMessage) {
     const { commandArgs = [] } = parsedMessage;
     let requestChannelInfo = { name: "", correct: false };
     // Проверка корректности названия канала
@@ -306,11 +321,29 @@ ${e}`
       );
     } else {
       // Если названия нет, то нужно получить случайное
-      const randomChannel = await this.db.getRandomChannel(withVideo);
+      const randomChannel = await this.db.getRandomChannel();
       requestChannelInfo.name = randomChannel.name;
       requestChannelInfo.correct = true;
     }
     return requestChannelInfo;
+  }
+
+  /**
+   * Получить из команды максимальное количество записей
+   * @param {TelegramBot.ParsedCommandText} parsedMessage Команда боту
+   * @param {number} defaultMaxCount - По умолчанию
+   * @returns {number} количество записей
+   */
+  #getMaxCountRecords(parsedMessage, defaultMaxCount = 20) {
+    // Получить параметр с количеством записей:
+    let limit = defaultMaxCount;
+    if (parsedMessage.commandArgs.length === 2) {
+      const paramLimit = parseInt(parsedMessage.commandArgs[1], 10);
+      if (paramLimit !== NaN && paramLimit < 51 && paramLimit > 0) {
+        limit = paramLimit;
+      }
+    }
+    return limit;
   }
 }
 module.exports = NSFWBot;
