@@ -143,15 +143,38 @@ class FridayRouter extends AppBotRouter {
    * @param {Response} res
    */
   getNSFW = (req, res) => {
-    const { limit = 20 } = req.body;
+    const { limit = 20, name = "nsfw" } = req.body;
     // Определиться с количеством записей
     const count = +limit;
     this.bot.reddit
-      .getNewRecords({ limit: count === NaN ? 20 : count > 50 ? 50 : count })
+      .getNewRecords({
+        limit: count === NaN ? 20 : count > 50 ? 50 : count,
+        name,
+      })
+      .then((records) => {
+        res.status(200).json({ records, name });
+      });
+  };
+
+  /**
+   * Возвращает видео-записи для модерирования рассылки
+   * @param {Request} req
+   * @param {Response} res
+   */
+  getVideoNSFW = (req, res) => {
+    const { limit = 20, name = "nsfw" } = req.body;
+    // Определиться с количеством записей
+    const count = +limit;
+    this.bot.reddit
+      .getNewVideoRecords({
+        limit: count === NaN ? 20 : count > 50 ? 50 : count,
+        name,
+      })
       .then((records) => {
         res.status(200).json({ records });
       });
   };
+
   testVideo = (req, res) => {
     const { video } = req.body;
     // const a = toArrayBuffer(video);
