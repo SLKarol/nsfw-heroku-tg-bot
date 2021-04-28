@@ -177,6 +177,21 @@ class FridayRouter extends AppBotRouter {
       });
   };
 
+  /**
+   * Возвращает список каналов
+   * @param {Request} req
+   * @param {Response} res
+   */
+  getListChannels = asyncHandler(async (req, res) => {
+    if (!req.isAuth) {
+      return res
+        .status(401)
+        .json({ message: "Ошибка авторизации", success: false });
+    }
+    const channels = await this.bot.db.getListChannels(true);
+    return res.status(200).json({ channels });
+  });
+
   testVideo = (req, res) => {
     const { video } = req.body;
     // const a = toArrayBuffer(video);
