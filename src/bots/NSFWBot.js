@@ -122,11 +122,16 @@ class NSFWBot extends TelegramBot {
           disable_notification: true,
           caption: photo.caption,
         });
+        // .catch((err) => err);
       }
       promises.push(
         promise
           .then(() => delay(700))
-          .catch((err) => console.log("sendFridayContent Error: ", err))
+          .then(() => ({ status: "ok" }))
+          .catch((err) => {
+            console.error("sendFridayContent Error: ", err);
+            return { status: "error", error: err };
+          })
       );
     }
     return Promise.all(promises);
@@ -222,7 +227,6 @@ ${e}`
         })
       )
       .then((list) => {
-        // const listVideos=list.filter(i=>i!==null);
         if (!list.length) {
           return bot.sendMessage(chatId, "Новых видео не найдено.");
         }

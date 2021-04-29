@@ -18,6 +18,8 @@ function App() {
           <Link href="/anecdotes">Рассылка выпусков БОР</Link>
           <Link href="/forcemail">Принудительная рассылка NSFW</Link>
           <Link href="/customphoto">Выбрать фото и разослать</Link>
+          <Link href="/moderate">Модерация выпуска</Link>
+          <Link href="/test">Test</Link>
         </div>
       </Typography>
     </Container>

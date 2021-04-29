@@ -22,8 +22,8 @@ class FridayRouter extends AppBotRouter {
     this.router.post("/sendFriday", this.sendFriday);
     this.router.post("/sendFridayVideo", this.sendFridayVideo);
     this.router.post("/sendBOR", this.sendBOR);
-    this.router.post("/getNSFW", this.getNSFW);
-    this.router.post("/getVideoNSFW", this.getVideoNSFW);
+    this.router.get("/listChannels", this.getListChannels);
+    this.router.get("/getContent", this.getContent);
     // ! удалить
     this.router.post("/testVideo", this.testVideo);
   }
@@ -36,6 +36,11 @@ class FridayRouter extends AppBotRouter {
    * @param {Response} res
    */
   sendFriday = asyncHandler(async (req, res) => {
+    if (!req.isAuth) {
+      return res
+        .status(401)
+        .json({ message: "Ошибка авторизации", success: false });
+    }
     const { records = [], name = "nsfw" } = req.body;
     // Получить Название канала
     const infoChannel = await this.bot.getChannelInfo({ commandArgs: [name] });
@@ -46,17 +51,19 @@ class FridayRouter extends AppBotRouter {
       : new Promise((resolve) => resolve(records));
     return Promise.all([prChatIds, prFridayMessages])
       .then(([chatIds, records]) => {
+        // Защититься от повторного запроса
+        const arrayIds = Array.from(new Set(chatIds));
         const fridayMessages = this.bot.createAlbums(
           records,
           this.bot.reddit.mapRedditForTelegram
         );
-        // Защититься от повторного запроса
-        const promises = chatIds.map((chatId) =>
+        const promises = arrayIds.map((chatId) =>
           this.bot.sendFridayContent({ chatId, fridayMessages })
         );
         return Promise.all(promises);
       })
-      .then(() => res.sendStatus(200));
+      .then((resultWork) => this.analyzeModerateWork(resultWork, res))
+      .catch((e) => res.status(400).json({ e: e }));
   });
 
   /**
@@ -141,11 +148,14 @@ class FridayRouter extends AppBotRouter {
 
   /**
    * Возвращает записи для модерирования рассылки
-   * @param {Request} req
+   * @param {Object} params
+   * @param {number} params.limit - Максимальное количество записей
+   * @param {string} params.name - Название канала
+   * @param {boolean} params.filterContent - Фильтровать контент?
    * @param {Response} res
    */
-  getNSFW = (req, res) => {
-    const { limit = 20, name = "nsfw" } = req.body;
+  getNSFW = (params, res) => {
+    const { limit = 20, name = "nsfw", filterContent = true } = params;
     // Определиться с количеством записей
     const count = +limit;
     this.bot.reddit
@@ -160,20 +170,24 @@ class FridayRouter extends AppBotRouter {
 
   /**
    * Возвращает видео-записи для модерирования рассылки
-   * @param {Request} req
+   * @param {Object} params
+   * @param {number} params.limit - Максимальное количество записей
+   * @param {string} params.name - Название канала
+   * @param {boolean} params.filterContent - Фильтровать контент?
    * @param {Response} res
    */
-  getVideoNSFW = (req, res) => {
-    const { limit = 20, name = "nsfw" } = req.body;
+  getVideoNSFW = (params, res) => {
+    const { limit = 20, name = "nsfw", filterContent = true } = params;
     // Определиться с количеством записей
     const count = +limit;
     this.bot.reddit
       .getNewVideoRecords({
         limit: count === NaN ? 20 : count > 50 ? 50 : count,
         name,
+        filterContent,
       })
       .then((records) => {
-        res.status(200).json({ records });
+        res.status(200).json({ records, name });
       });
   };
 
@@ -188,9 +202,55 @@ class FridayRouter extends AppBotRouter {
         .status(401)
         .json({ message: "Ошибка авторизации", success: false });
     }
-    const channels = await this.bot.db.getListChannels(true);
+    const channels = await this.bot.db.getListChannels();
     return res.status(200).json({ channels });
   });
+
+  /**
+   * Получить контент для модерирования
+   * @param {Request} req
+   * @param {Response} res
+   */
+  getContent = (req, res) => {
+    const {
+      type = "photo",
+      channel = "nsfw",
+      filterContent = false,
+      limit = 50,
+    } = req.query;
+    if (type === "photo") {
+      return this.getNSFW({ name: channel, filterContent, limit }, res);
+    }
+    if (type === "video") {
+      return this.getVideoNSFW({ name: channel, filterContent, limit }, res);
+    }
+    res.status(422).json({
+      status: false,
+      validationErrors: [{ type: "Unknown value" }],
+    });
+  };
+
+  /**
+   * Анализ и выдача результатов работы промисов
+   * отправки модерируемого контента
+   * @param {Array} resultWork
+   * @param {Response} res
+   * @returns
+   */
+  analyzeModerateWork = (resultWork, res) => {
+    //resultWork это результат работы промисов.
+    // Задача в том, чтобы найти промис, где есть ошибка
+    const errorInPromise = resultWork.find((item) =>
+      item.some((re) => re.status === "error")
+    );
+    if (errorInPromise) {
+      const error = Array.isArray(errorInPromise)
+        ? errorInPromise[0]
+        : errorInPromise;
+      return res.status(400).json(error);
+    }
+    return res.status(200).json({ status: "ok" });
+  };
 
   testVideo = (req, res) => {
     const { video } = req.body;

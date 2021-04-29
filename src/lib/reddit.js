@@ -27,9 +27,10 @@ class Reddit {
    * @param {Object} props
    * @param {number} props.limit Максимальное количество фото/видео
    * @param {string} props.name имя канала
+   * @param {boolean} props.filterContent - Фильтровать контент?
    * @returns {Promise<Array>}
    */
-  async getNewRecords({ limit = 20, name = "nsfw" }) {
+  async getNewRecords({ limit = 20, name = "nsfw", filterContent = true }) {
     const nsfwResponse = await this.#client
       .reddit(`r/${name.toLowerCase()}`)
       .new.get({
@@ -38,10 +39,11 @@ class Reddit {
     const {
       data: { children },
     } = nsfwResponse;
-    const filteredRecords = this.#filterContent(
-      this.#prepareRecords(children, true)
-    );
-    const records = await this.#checkCorrectImages(filteredRecords);
+
+    const recordsWork = filterContent
+      ? this.#filterContent(this.#prepareRecords(children))
+      : this.#prepareRecords(children);
+    const records = await this.#checkCorrectImages(recordsWork);
     return records.reduce((acc, record) => {
       if (record.correct) {
         acc.push({ title: record.title, url: record.url });
@@ -126,6 +128,7 @@ class Reddit {
    * @param {Object} props
    * @param {number} props.limit Максимальное количество фото/видео
    * @param {string} props.name имя канала
+   * @param {boolean} props.filterContent - Фильтровать контент?
    * @returns {Promise<Array>}
    */
   async getNewVideoRecords({

@@ -8,6 +8,9 @@ import SignIn from "pages/SignIn/";
 import Anecdotes from "pages/Anecdotes/";
 import ForceMail from "pages/ForceMail/";
 import MailCustomPhoto from "pages/MailCustomPhoto/";
+import ModerateFriday from "pages/ModerateFriday/ModerateFriday";
+
+import TestPage from "pages/TestPage/";
 
 import reportWebVitals from "./reportWebVitals";
 
@@ -20,6 +23,8 @@ ReactDOM.render(
         <Route path="/anecdotes" component={Anecdotes} />
         <Route path="/forcemail" component={ForceMail} />
         <Route path="/customphoto" component={MailCustomPhoto} />
+        <Route path="/moderate" component={ModerateFriday} />
+        <Route path="/test" component={TestPage} />
       </Switch>
     </BrowserRouter>
   </React.StrictMode>,
