@@ -180,7 +180,7 @@ class FridayRouter extends AppBotRouter {
     const { limit = 20, name = "nsfw", filterContent = true } = params;
     // Определиться с количеством записей
     const count = +limit;
-    this.bot.reddit
+    return this.bot.reddit
       .getNewVideoRecords({
         limit: count === NaN ? 20 : count > 50 ? 50 : count,
         name,

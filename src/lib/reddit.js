@@ -55,14 +55,25 @@ class Reddit {
   /**
    * Подготовить массив к обработке - убрать из него лишнюю информацию
    * @param {Array} data
+   * @param {boolean} [video=false] - Подготовить для видео?
    * @returns {Array}
    */
-  #prepareRecords(data) {
+  #prepareRecords(data, video = false) {
     return data.map((record) => {
       const {
-        data: { title, url, is_video, media },
+        data: { title, url, is_video, media, preview },
       } = record;
-      return { title, url, is_video, media };
+      const re = { title, url, is_video, media };
+      // Если изображение, то превью не нужно
+      if (!video) {
+        return re;
+      }
+      const previewImages = preview?.images;
+      if (Array.isArray(previewImages) && previewImages.length) {
+        const { source } = previewImages[0];
+        if (source) re.preview = source;
+      }
+      return re;
     });
   }
 
@@ -145,8 +156,8 @@ class Reddit {
       data: { children },
     } = nsfwResponse;
     const recordsWork = filterContent
-      ? this.#filterContent(this.#prepareRecords(children))
-      : this.#prepareRecords(children);
+      ? this.#filterContent(this.#prepareRecords(children, true))
+      : this.#prepareRecords(children, true);
     const promises = recordsWork.reduce(this.__getVideoUrl, []);
     const re = await Promise.all(promises);
     return re.filter((i) => i !== null);
@@ -162,12 +173,12 @@ class Reddit {
    * @return {Promise<Array>} videoRecords
    */
   __getVideoUrl(listPromises, record) {
-    const { url, title, media } = record;
+    const { url, title, media, preview = undefined } = record;
     // Это gifv?
     if (!!url.match(/.(gifv)$/i)) {
       listPromises.push(
         new Promise((resolve) =>
-          resolve({ url: url.replace(".gifv", ".mp4"), title })
+          resolve({ url: url.replace(".gifv", ".mp4"), title, preview })
         )
       );
       return listPromises;
@@ -188,7 +199,7 @@ class Reddit {
               if (source !== null) {
                 const { src, type } = source.rawAttributes;
                 if (type === "video/mp4") {
-                  resolve({ url: src, title });
+                  resolve({ url: src, title, preview });
                 }
               }
               resolve(null);
@@ -208,7 +219,9 @@ class Reddit {
       }
       const urlAudio = urlVideo.replace(fileName, "DASH_audio.mp4");
       listPromises.push(
-        new Promise((resolve) => resolve({ url: urlVideo, title, urlAudio }))
+        new Promise((resolve) =>
+          resolve({ url: urlVideo, title, urlAudio, preview })
+        )
       );
       return listPromises;
     }
