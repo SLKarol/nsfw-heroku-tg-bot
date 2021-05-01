@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 import { useModerateStore } from "mobx/moderateFriday";
 
 import Photo from "./Photo";
-import CheckPhoto from "./CheckPhoto";
+import CheckMaterial from "components/CheckMaterial/CheckMaterial";
 
 const ListPhotos = () => {
   const { list } = useModerateStore();
@@ -14,7 +14,7 @@ const ListPhotos = () => {
         return (
           <figure key={url}>
             <Photo url={url} title={title} />
-            <CheckPhoto title={title} checked={checked} url={url} />
+            <CheckMaterial title={title} checked={checked} url={url} />
           </figure>
         );
       })}

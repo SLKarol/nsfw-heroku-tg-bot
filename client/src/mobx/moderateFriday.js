@@ -46,6 +46,9 @@ export class ModerateFridayStore {
    * Загрузка модерируемого содержимого
    */
   loadRecords = async () => {
+    this.recordsToModerate = [];
+    this.state = "pending";
+    this.selectedRecords = [];
     const token = localStorage.getItem("token");
     // const url = new URL("/api/botFriday/getContent?");
     const channel = this.selectedChannelName;
@@ -55,7 +58,6 @@ export class ModerateFridayStore {
       channel,
     });
 
-    this.state = "pending";
     const response = await fetch(`/api/botFriday/getContent?${params}`, {
       method: "GET",
       headers: {

@@ -3,7 +3,7 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 
 import { useModerateStore } from "mobx/moderateFriday";
 
-const CheckPhoto = ({ url, title, checked }) => {
+const CheckMaterial = ({ url, title, checked }) => {
   const { handleChangeSelect } = useModerateStore();
 
   return (
@@ -23,4 +23,4 @@ const CheckPhoto = ({ url, title, checked }) => {
   );
 };
 
-export default CheckPhoto;
+export default CheckMaterial;

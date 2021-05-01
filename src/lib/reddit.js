@@ -71,7 +71,9 @@ class Reddit {
       const previewImages = preview?.images;
       if (Array.isArray(previewImages) && previewImages.length) {
         const { source } = previewImages[0];
-        if (source) re.preview = source;
+        if (source) {
+          re.preview = source;
+        }
       }
       return re;
     });

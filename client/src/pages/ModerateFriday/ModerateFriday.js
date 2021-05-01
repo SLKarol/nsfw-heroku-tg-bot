@@ -7,7 +7,6 @@ import Header from "./Header/Header";
 import Content from "./Content/Content";
 import Toolbar from "./Toolbar/Toolbar";
 import FetchStatus from "./FetchStatus/FetchStatus";
-import GridContainer from "components/GridContainer/GridContainer";
 
 const ModerateFriday = () => {
   const store = createStore();
@@ -19,9 +18,7 @@ const ModerateFriday = () => {
         <Header />
         <Toolbar />
         <FetchStatus />
-        <GridContainer>
-          <Content />
-        </GridContainer>
+        <Content />
       </ModerateStoreContext.Provider>
     </Container>
   );
