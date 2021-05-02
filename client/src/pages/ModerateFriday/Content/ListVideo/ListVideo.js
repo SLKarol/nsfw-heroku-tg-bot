@@ -15,7 +15,7 @@ const ListVideo = () => {
         return (
           <Grid key={url} item xs={12} sm={6} xl={4} md={4}>
             <figure>
-              <VideoContent url={url} urlAudio={urlAudio} />
+              <VideoContent url={url} urlAudio={urlAudio} title={title} />
               <CheckMaterial url={url} title={title} checked={checked} />
             </figure>
           </Grid>

@@ -52,14 +52,24 @@ class VideoContent extends PureComponent {
       this.audioRef.current.currentTime = 0;
     }
   };
+
+  /**
+   * Обработка нажатия на "Скачать"
+   */
   onDownload = () => {
     this.setState({ download: true }, () => {
-      const { url, urlAudio = null } = this.props;
+      const { url, urlAudio = null, title } = this.props;
+      const fileName = `${title}.${url
+        .split(/[#?]/)[0]
+        .split(".")
+        .pop()
+        .trim()}`;
+
       downloadMedia(url, urlAudio).then((personUint8Array) => {
         const blob = new Blob([personUint8Array]);
         const href = window.URL.createObjectURL(blob);
         const a = this.linkRef.current;
-        a.download = "test.mp4";
+        a.download = fileName;
         a.href = href;
         a.click();
         a.href = "";

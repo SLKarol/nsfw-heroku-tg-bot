@@ -6,7 +6,7 @@ import HeaderPage from "components/HeaderPage";
 import Header from "./Header/Header";
 import Content from "./Content/Content";
 import Toolbar from "./Toolbar/Toolbar";
-import FetchStatus from "./FetchStatus/FetchStatus";
+import StatusBar from "./StatusBar/StatusBar";
 
 const ModerateFriday = () => {
   const store = createStore();
@@ -17,7 +17,7 @@ const ModerateFriday = () => {
       <ModerateStoreContext.Provider value={store}>
         <Header />
         <Toolbar />
-        <FetchStatus />
+        <StatusBar />
         <Content />
       </ModerateStoreContext.Provider>
     </Container>

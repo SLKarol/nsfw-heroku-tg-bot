@@ -24,8 +24,6 @@ class FridayRouter extends AppBotRouter {
     this.router.post("/sendBOR", this.sendBOR);
     this.router.get("/listChannels", this.getListChannels);
     this.router.get("/getContent", this.getContent);
-    // ! удалить
-    this.router.post("/testVideo", this.testVideo);
   }
 
   /**
@@ -63,7 +61,7 @@ class FridayRouter extends AppBotRouter {
         return Promise.all(promises);
       })
       .then((resultWork) => this.analyzeModerateWork(resultWork, res))
-      .catch((e) => res.status(400).json({ e: e }));
+      .catch((e) => res.status(400).json({ error: e }));
   });
 
   /**
@@ -92,14 +90,19 @@ class FridayRouter extends AppBotRouter {
       .then(([chatIds, list]) => {
         // Защититься от повторного запроса
         const arrayIds = Array.from(new Set(chatIds));
+        const listAlbums = this.bot.createAlbums(
+          list,
+          this.bot.reddit.mapVideoRedditForTelegram
+        );
         const promises = list.length
           ? arrayIds.map((chatId) =>
-              this.bot.sendFridayContentVideo({ chatId, list })
+              this.bot.sendFridayContentVideo({ chatId, listAlbums })
             )
           : [];
         return Promise.all(promises);
       })
-      .then(() => res.sendStatus(200));
+      .then((resultWork) => this.analyzeModerateWork(resultWork, res))
+      .catch((e) => res.status(400).json({ error: e }));
   });
 
   sendBOR = (req, res) => {
@@ -250,30 +253,6 @@ class FridayRouter extends AppBotRouter {
       return res.status(400).json(error);
     }
     return res.status(200).json({ status: "ok" });
-  };
-
-  testVideo = (req, res) => {
-    const { video } = req.body;
-    // const a = toArrayBuffer(video);
-    // var buffer = Buffer.from(new Uint8Array(video));
-    // console.log("a.length :>> ", a);
-    // console.log("video :>> ", video);
-    // const g = toArrayBuffer(video);
-    // const buffer = Buffer.from(g);
-    // console.log("g :>> ", g);
-    // res.status(200).json({ message: "Отправлено", success: true });
-    // const b64encoded = Buffer.from(video);
-    const personUint8Array = Uint8Array.from(video);
-    const buffer = Buffer.from(personUint8Array);
-    console.log("b :>> ", buffer);
-    this.bot.bot
-      .sendVideo(570986591, buffer)
-      .then((t) => {
-        res.status(200);
-      })
-      .catch((e) => {
-        res.status(401);
-      });
   };
 }
 module.exports = FridayRouter;

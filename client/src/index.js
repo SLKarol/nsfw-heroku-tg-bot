@@ -10,8 +10,6 @@ import ForceMail from "pages/ForceMail/";
 import MailCustomPhoto from "pages/MailCustomPhoto/";
 import ModerateFriday from "pages/ModerateFriday/ModerateFriday";
 
-import TestPage from "pages/TestPage/";
-
 import reportWebVitals from "./reportWebVitals";
 
 ReactDOM.render(
@@ -24,7 +22,6 @@ ReactDOM.render(
         <Route path="/forcemail" component={ForceMail} />
         <Route path="/customphoto" component={MailCustomPhoto} />
         <Route path="/moderate" component={ModerateFriday} />
-        <Route path="/test" component={TestPage} />
       </Switch>
     </BrowserRouter>
   </React.StrictMode>,

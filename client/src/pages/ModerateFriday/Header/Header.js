@@ -28,6 +28,7 @@ const Header = () => {
   const {
     channelsStore: { loadList },
     loadRecords,
+    appPending,
   } = useModerateStore();
 
   useEffect(() => {
@@ -45,7 +46,11 @@ const Header = () => {
           <SelectType />
         </Grid>
         <Grid item xs={3} className={classes.buttons}>
-          <Button variant="contained" onClick={loadRecords}>
+          <Button
+            variant="contained"
+            onClick={loadRecords}
+            disabled={appPending}
+          >
             Что нового?
           </Button>
         </Grid>

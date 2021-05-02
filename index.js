@@ -23,8 +23,8 @@ const nsfwBot = new NSFWBot(TOKEN, reddit, db);
 
 // CORS
 app.use(cors());
-app.use(express.json({ limit: "50mb" })); // for parsing application/json
-app.use(express.urlencoded({ extended: true, limit: "50mb" })); // for parsing application/x-www-form-urlencoded
+app.use(express.json({ limit: "250mb" })); // for parsing application/json
+app.use(express.urlencoded({ extended: true, limit: "250mb" })); // for parsing application/x-www-form-urlencoded
 // Звено для авторизации
 app.use(authMiddleware);
 

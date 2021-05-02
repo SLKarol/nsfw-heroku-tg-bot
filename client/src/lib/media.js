@@ -1,27 +1,33 @@
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 
-export async function downloadMedia(video, audio = null) {
-  if (audio === null) {
-    return fetchFile(video);
+/**
+ * Скачивание медиа-файла
+ * @param {string} videoUrl Ссылка на видео
+ * @param {string} audioUrl Ссылка на аудио
+ * @returns {Promise<Uint8Array>}
+ */
+export async function downloadMedia(videoUrl, audioUrl = null) {
+  if (audioUrl === null) {
+    return fetchFile(videoUrl);
   }
-  return mergeAudioVideo(video, audio);
+  return mergeAudioVideo(videoUrl, audioUrl);
 }
 
 /**
  * Объединяет два видео и аудио файлы в один видеофайл
  * @param {string} videoUrl Ссылка на видео
  * @param {string} audioUrl Ссылка на аудио
- * @returns
+ * @returns {Promise<Uint8Array>}
  */
-async function mergeAudioVideo(video, audio) {
+async function mergeAudioVideo(videoUrl, audioUrl) {
   let ffmpeg = createFFmpeg();
   await ffmpeg.load();
 
-  const videoPromise = await fetchMediaBlob(video);
+  const videoPromise = await fetchMediaBlob(videoUrl);
   if (videoPromise === null) {
     return null;
   }
-  const audioPromise = await fetchMediaBlob(audio);
+  const audioPromise = await fetchMediaBlob(audioUrl);
   if (audioPromise === null) {
     return videoPromise;
   }

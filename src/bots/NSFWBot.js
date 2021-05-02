@@ -106,7 +106,7 @@ class NSFWBot extends TelegramBot {
    * Рассылка пятничных фото
    * @param {Object} props
    * @param {string|number} props.chatId ID чата
-   * @param {Array} props.fridayMessages Пятничный контент
+   * @param {Array} props.fridayMessages Пятничный контент в виде альбомов
    */
   sendFridayContent = ({ chatId, fridayMessages }) => {
     const { bot } = this;
@@ -202,6 +202,7 @@ ${e}`
 
   /**
    * Обработка команды бота /video
+   * todo: научить бот мерджить аудио и видеодорожки.
    * @param {string|number} chatId ID канала
    * @param {TelegramBot} bot Бот
    * @param {TelegramBot.ParsedCommandText} parsedMessage Команда боту
@@ -230,7 +231,12 @@ ${e}`
         if (!list.length) {
           return bot.sendMessage(chatId, "Новых видео не найдено.");
         }
-        return this.sendFridayContentVideo({ chatId, list });
+        const listAlbums = this.createAlbums(
+          list,
+          this.reddit.mapVideoRedditForTelegram
+        );
+
+        return this.sendFridayContentVideo({ chatId, listAlbums });
       })
       .catch((e) => {
         console.error(e);
@@ -246,30 +252,37 @@ ${e}`
    * Отправка видеоконтента
    * @param {Object} props
    * @param {string|number} props.chatId ID чата
-   * @param {Array} props.list Массив содержимого
+   * @param {Array} props.listAlbums Массив альбомов
    */
-  async sendFridayContentVideo({ chatId, list }) {
-    if (!list.length) {
+  async sendFridayContentVideo({ chatId, listAlbums }) {
+    if (!listAlbums.length) {
       return process.nextTick();
     }
     const { bot } = this;
-    return bot
-      .sendMessage(chatId, `Нашлось видео: ${list.length} .`)
-      .then(() => {
-        const promises = [];
-        list.forEach((record) => {
-          promises.push(
-            bot
-              .sendVideo(chatId, record.url, {
-                caption: record.title,
-                disable_notification: true,
-              })
-              .then(() => delay())
-              .catch((err) => console.error(err))
-          );
+    const promises = [];
+    for (const group of listAlbums) {
+      let promise;
+      if (group.length > 1) {
+        promise = bot.sendMediaGroup(chatId, group);
+      } else {
+        // Если это всего лишь одно видео, то отправить одно видео
+        const [video] = group;
+        promise = bot.sendVideo(chatId, video.media, {
+          disable_notification: true,
+          caption: video.caption,
         });
-        return Promise.all(promises);
-      });
+      }
+      promises.push(
+        promise
+          .then(() => delay(700))
+          .then(() => ({ status: "ok" }))
+          .catch((err) => {
+            console.error("sendFridayContent Error: ", err);
+            return { status: "error", error: err };
+          })
+      );
+    }
+    return Promise.all(promises);
   }
 
   /**
@@ -279,10 +292,14 @@ ${e}`
    */
   helpCommand(chatId) {
     const { bot } = this;
-    let helpText = `Телеграм-бот, созданный для развлечения, а не для работы.\n*Доступные команды:*\n`;
-    helpText += COMMANDS.map(
-      (command) => `*/${command.command}* ${command.description}`
-    ).join(`\n`);
+    let helpText = `Телеграм-бот, созданный для развлечения, а не для работы.\n\n*Доступные команды:*\n`;
+    helpText += COMMANDS.reduce((acc, cmd) => {
+      const { command, description, hideHelp = false } = cmd;
+      if (!hideHelp) {
+        acc += `*/${command}* ${description}\n`;
+      }
+      return acc;
+    }, "");
     return bot.sendMessage(chatId, helpText, {
       parse_mode: "Markdown",
     });
@@ -299,12 +316,13 @@ ${e}`
       .then((channels) => {
         let message = channels.reduce((acc, record) => {
           acc += `${record.name} _(Видео: ${
-            record.onlyVideo ? "Да" : "Нет"
+            record.withVideo ? "Да" : "Нет"
           })_\n`;
           return acc;
         }, "");
-        message +=
-          "\nЕсли содержит видео, значит контент может быть тем, кому за 21";
+        message += `\nЕсли содержит видео, то это значит, что:
+1. Контент может быть с ограничением для тех, кому меньше 21 года,
+2. Работа с таким каналом в разработке.`;
         return bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
       })
       .catch((err) => console.error(err));

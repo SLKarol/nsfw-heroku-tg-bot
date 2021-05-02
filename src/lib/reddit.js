@@ -137,6 +137,21 @@ class Reddit {
   });
 
   /**
+   * Подготовка видео для отправки в телеграм
+   */
+  mapVideoRedditForTelegram = (reddit) => {
+    const { url, title } = reddit;
+    const re = { type: "video", caption: title, media: url };
+    if (typeof url === "string") {
+      return re;
+    }
+    const personUint8Array = Uint8Array.from(url);
+    const buffer = Buffer.from(personUint8Array);
+    re.media = buffer;
+    return re;
+  };
+
+  /**
    * Получает новые видеозаписи NFSW
    * @param {Object} props
    * @param {number} props.limit Максимальное количество фото/видео

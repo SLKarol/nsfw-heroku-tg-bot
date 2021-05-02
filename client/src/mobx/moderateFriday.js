@@ -3,6 +3,7 @@ import { createContext, useContext } from "react";
 import { makeAutoObservable, runInAction } from "mobx";
 
 import { ChannelsStore } from "mobx/channels";
+import { downloadMedia } from "lib/media";
 
 export class ModerateFridayStore {
   /**
@@ -18,7 +19,7 @@ export class ModerateFridayStore {
   /** Записи для модерации */
   recordsToModerate = [];
   /** Статус доступности */
-  state = "done;";
+  state = "done";
   /** ID то есть- url) выбранных записей */
   selectedRecords = [];
   /** Ошибка работы с api*/
@@ -117,13 +118,27 @@ export class ModerateFridayStore {
   }
 
   /**
+   * Приложение занято работой с api
+   */
+  get appPending() {
+    const {
+      state,
+      channelsStore: { state: channelState },
+    } = this;
+    return state === "pending" || channelState === "pending";
+  }
+
+  /**
    * Отправка фото/видео
    */
   handleSendSelectedRecords = () => {
     const records = this.recordsToModerate.filter(this.__filterSelectedRecords);
     const channelName = this.selectedChannelName;
     if (this.countSelected && this.typeMailing === "photo") {
-      this.__sendSelectedPhoto(records, channelName);
+      return this.__sendSelectedPhoto(records, channelName);
+    }
+    if (this.countSelected && this.typeMailing === "video") {
+      return this.__sendSelectedVideo(records, channelName);
     }
   };
 
@@ -139,6 +154,23 @@ export class ModerateFridayStore {
       },
       body: JSON.stringify({ records, name }),
       // body: JSON.stringify({ records: [2128506], name }),
+    }).then(this.moderateFetchSuccess, this.moderateFetchFailure);
+  };
+
+  __sendSelectedVideo = async (records, name) => {
+    this.state = "pending";
+    const token = localStorage.getItem("token");
+    // Собрать видеозаписи
+    const recordsToPublish = await Promise.all(
+      records.map(this.__mapVideoForTelegram)
+    );
+    fetch("/api/botFriday/sendFridayVideo", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ records: recordsToPublish, name }),
     }).then(this.moderateFetchSuccess, this.moderateFetchFailure);
   };
 
@@ -177,6 +209,19 @@ export class ModerateFridayStore {
       return;
     }
     this.error = JSON.stringify(error);
+  };
+
+  /**
+   * Подготовка видео к отправке в телеграмм
+   * @param {Object} record
+   * @returns
+   */
+  __mapVideoForTelegram = async (record) => {
+    const { title, url, urlAudio } = record;
+    const baseInfo = { is_video: true, title };
+    const mediaData = await downloadMedia(url, urlAudio);
+    baseInfo.url = typeof mediaData === "string" ? url : Array.from(mediaData);
+    return baseInfo;
   };
 }
 
