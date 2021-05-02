@@ -236,7 +236,7 @@ ${e}`
           this.reddit.mapVideoRedditForTelegram
         );
 
-        return this.sendFridayContentVideo({ chatId, listAlbums });
+        return this.sendFridayContentVideo({ chatId, list: listAlbums });
       })
       .catch((e) => {
         console.error(e);
@@ -252,21 +252,22 @@ ${e}`
    * Отправка видеоконтента
    * @param {Object} props
    * @param {string|number} props.chatId ID чата
-   * @param {Array} props.listAlbums Массив альбомов
+   * @param {Array} props.list Массив альбомов
    */
-  async sendFridayContentVideo({ chatId, listAlbums }) {
-    if (!listAlbums.length) {
+  async sendFridayContentVideo({ chatId, list }) {
+    if (!list.length) {
       return process.nextTick();
     }
     const { bot } = this;
     const promises = [];
-    for (const group of listAlbums) {
+    for (const group of list) {
+      const isArray = Array.isArray(group);
       let promise;
-      if (group.length > 1) {
+      if (group.length > 1 && isArray) {
         promise = bot.sendMediaGroup(chatId, group);
       } else {
         // Если это всего лишь одно видео, то отправить одно видео
-        const [video] = group;
+        const video = isArray ? group[0] : group;
         promise = bot.sendVideo(chatId, video.media, {
           disable_notification: true,
           caption: video.caption,

@@ -1,6 +1,8 @@
 import { createContext, useContext } from "react";
 import { makeAutoObservable, runInAction } from "mobx";
 
+import { getListChannels } from "lib/nsfw";
+
 export class ChannelsStore {
   list = [];
   state = "done;";
@@ -14,18 +16,8 @@ export class ChannelsStore {
    * Загрузка списка каналов
    */
   loadList = async () => {
-    const token = localStorage.getItem("token");
-
     this.state = "pending";
-    const response = await fetch("/api/botFriday/listChannels", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    const result = await response.json();
-    const { channels } = result;
+    const channels = await getListChannels();
     runInAction(() => {
       this.state = "done";
       this.list = channels;

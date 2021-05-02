@@ -90,13 +90,23 @@ class FridayRouter extends AppBotRouter {
       .then(([chatIds, list]) => {
         // Защититься от повторного запроса
         const arrayIds = Array.from(new Set(chatIds));
+        // Отделить записи, где url в виде строки:
+        // Потому что это gifv
+        const gifVideos = list
+          .filter((item) => typeof item.url === "string")
+          .map(this.bot.reddit.mapVideoRedditForTelegram);
+        // Обычные видео-альбомы для телеграм.
         const listAlbums = this.bot.createAlbums(
-          list,
+          list.filter((item) => typeof item.url !== "string"),
           this.bot.reddit.mapVideoRedditForTelegram
         );
+        const recordsToTelegram = [...listAlbums, ...gifVideos];
         const promises = list.length
           ? arrayIds.map((chatId) =>
-              this.bot.sendFridayContentVideo({ chatId, listAlbums })
+              this.bot.sendFridayContentVideo({
+                chatId,
+                list: recordsToTelegram,
+              })
             )
           : [];
         return Promise.all(promises);

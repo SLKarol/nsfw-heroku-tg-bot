@@ -17,7 +17,6 @@ function App() {
         <div className={styles.main}>
           <Link href="/anecdotes">Рассылка выпусков БОР</Link>
           <Link href="/forcemail">Принудительная рассылка NSFW</Link>
-          <Link href="/customphoto">Выбрать фото и разослать</Link>
           <Link href="/moderate">Модерация выпуска</Link>
         </div>
       </Typography>

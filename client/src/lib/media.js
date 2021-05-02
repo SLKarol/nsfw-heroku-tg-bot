@@ -23,14 +23,16 @@ async function mergeAudioVideo(videoUrl, audioUrl) {
   let ffmpeg = createFFmpeg();
   await ffmpeg.load();
 
+  const audioPromise = await fetchMediaBlob(audioUrl);
+  if (audioPromise === null) {
+    return videoUrl;
+  }
+
   const videoPromise = await fetchMediaBlob(videoUrl);
   if (videoPromise === null) {
     return null;
   }
-  const audioPromise = await fetchMediaBlob(audioUrl);
-  if (audioPromise === null) {
-    return videoPromise;
-  }
+
   ffmpeg.FS("writeFile", "video.mp4", videoPromise);
   ffmpeg.FS("writeFile", "audio.mp4", audioPromise);
   await ffmpeg.run(

@@ -196,15 +196,15 @@ export class ModerateFridayStore {
    * @param {Object} json
    */
   analyzeResponse = (json) => {
+    this.state = "error";
     // Найти ответ
-    const { status, error = {} } = json;
+    const { status, error } = json;
     if (status === "ok") {
       this.state = "success";
       this.error = null;
       return;
     }
-    if (typeof error === "object" && "message" in error) {
-      this.state = "error";
+    if (error && typeof error === "object" && "message" in error) {
       this.error = error.message;
       return;
     }

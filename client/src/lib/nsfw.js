@@ -2,13 +2,26 @@
  * Отправка nsfw
  * @returns {Promise}
  */
-export function sendNSFW(type) {
+export async function sendNSFW(type) {
+  const token = localStorage.getItem("token");
   const url = type === "photo" ? "sendFriday" : "sendFridayVideo";
+  const channels = await getListChannels();
+  const filteredChannels = channels.filter((ch) => {
+    if (type === "video") {
+      return ch.withVideo;
+    }
+    return !ch.withVideo;
+  });
+  const randomChannel =
+    filteredChannels[Math.floor(Math.random() * filteredChannels.length)];
+  debugger;
   return fetch(`/api/botFriday/${url}`, {
     method: "POST",
     headers: {
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
+    body: JSON.stringify({ name: randomChannel.name }),
   }).then((r) => r.status);
 }
 
@@ -39,4 +52,18 @@ export function sendFriday(records) {
     },
     body: JSON.stringify({ records }),
   });
+}
+
+export async function getListChannels() {
+  const token = localStorage.getItem("token");
+  const response = await fetch("/api/botFriday/listChannels", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  const result = await response.json();
+  const { channels } = result;
+  return channels;
 }

@@ -36,7 +36,7 @@ const Mailing = () => {
         <Button name="photo" onClick={onClick}>
           Рассылка фото
         </Button>
-        <Button name="video" onClick={onClick}>
+        <Button name="video" onClick={onClick} disabled>
           Рассылка видео
         </Button>
       </ButtonGroup>

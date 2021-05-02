@@ -125,10 +125,11 @@ class TelegramBot {
     const size = 10;
     // Получить массив из частей по size штук
     for (let i = 0; i < Math.ceil(friDay.length / size); i++) {
-      fridayMessages[i] = friDay
-        .slice(i * size, i * size + size)
-        // Подготовить эти 10 записей к отправке в телеграм
-        .map(callbackMap);
+      fridayMessages[i] = friDay.slice(i * size, i * size + size);
+      // Подготовить эти 10 записей к отправке в телеграм
+      if (callbackMap) {
+        fridayMessages[i] = fridayMessages[i].map(callbackMap);
+      }
     }
     return fridayMessages;
   }
