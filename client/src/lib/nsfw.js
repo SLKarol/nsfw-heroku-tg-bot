@@ -12,9 +12,9 @@ export async function sendNSFW(type) {
     }
     return !ch.withVideo;
   });
+  // Найти случайный канал: Сократит время выполнения на сервере.
   const randomChannel =
     filteredChannels[Math.floor(Math.random() * filteredChannels.length)];
-  debugger;
   return fetch(`/api/botFriday/${url}`, {
     method: "POST",
     headers: {

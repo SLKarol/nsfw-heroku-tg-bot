@@ -39,7 +39,7 @@ class FridayRouter extends AppBotRouter {
         .status(401)
         .json({ message: "Ошибка авторизации", success: false });
     }
-    const { records = [], name = "nsfw" } = req.body;
+    const { records = [], name } = req.body;
     // Получить Название канала
     const infoChannel = await this.bot.getChannelInfo({ commandArgs: [name] });
     // Получить ID Чатов для рассылки

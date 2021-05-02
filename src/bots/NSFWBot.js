@@ -337,7 +337,7 @@ ${e}`
     const { commandArgs = [] } = parsedMessage;
     let requestChannelInfo = { name: "", correct: false };
     // Проверка корректности названия канала
-    if (commandArgs.length) {
+    if (commandArgs.length && commandArgs[0]) {
       requestChannelInfo.name = commandArgs[0];
       requestChannelInfo.correct = await this.db.checkCorrectChannel(
         requestChannelInfo.name
