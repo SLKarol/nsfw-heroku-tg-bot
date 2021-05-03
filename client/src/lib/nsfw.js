@@ -57,7 +57,7 @@ export function sendFriday(records) {
 export async function getListChannels() {
   const token = localStorage.getItem("token");
   const response = await fetch("/api/botFriday/listChannels", {
-    method: "GET",
+    method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",

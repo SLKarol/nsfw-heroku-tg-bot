@@ -22,7 +22,7 @@ class FridayRouter extends AppBotRouter {
     this.router.post("/sendFriday", this.sendFriday);
     this.router.post("/sendFridayVideo", this.sendFridayVideo);
     this.router.post("/sendBOR", this.sendBOR);
-    this.router.get("/listChannels", this.getListChannels);
+    this.router.post("/listChannels", this.getListChannels);
     this.router.get("/getContent", this.getContent);
   }
 
