@@ -51,7 +51,6 @@ export class ModerateFridayStore {
     this.state = "pending";
     this.selectedRecords = [];
     const token = localStorage.getItem("token");
-    // const url = new URL("/api/botFriday/getContent?");
     const channel = this.selectedChannelName;
 
     const params = new URLSearchParams({
@@ -60,7 +59,7 @@ export class ModerateFridayStore {
     });
 
     const response = await fetch(`/api/botFriday/getContent?${params}`, {
-      method: "GET",
+      method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
