@@ -1,11 +1,14 @@
-const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
-const { validationResult } = require("express-validator");
-const jwt = require("jsonwebtoken");
+import * as crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { validationResult } from "express-validator";
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 
-const getConnection = require("../lib/getConnection");
+import { IUser } from "../schema/tgUsers";
 
-exports.postLogin = (req, res, next) => {
+import getConnection from "../lib/getConnection";
+
+export function postLogin(req: Request, res: Response, next: NextFunction) {
   const email = req.body.email;
   const password = req.body.password;
 
@@ -20,7 +23,7 @@ exports.postLogin = (req, res, next) => {
   }
   getConnection()
     .then((conn) => {
-      const TgUsers = conn.model("TgUsers");
+      const TgUsers = conn.model<IUser>("TgUsers");
       return TgUsers.findOne({ email: email });
     })
     .then((user) => {
@@ -38,7 +41,7 @@ exports.postLogin = (req, res, next) => {
               userId,
               email: user.email,
             },
-            process.env.TOKEN_JWT,
+            process.env.TOKEN_JWT || "",
             { expiresIn: "1h" }
           );
           return res.json({
@@ -53,8 +56,8 @@ exports.postLogin = (req, res, next) => {
       });
     })
     .catch((err) => {
+      res.status(500);
       const error = new Error(err);
-      error.httpStatusCode = 500;
       return next(error);
     });
-};
+}

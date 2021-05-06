@@ -1,7 +1,7 @@
-const { getDbConnection } = require("./mongoDb");
+import { getDbConnection } from "./mongoDb";
 
 /**
- * Работа с БД для nsfq
+ * Работа с БД для nsfw
  */
 class ModelNsfw {
   /**
@@ -24,7 +24,7 @@ class ModelNsfw {
   /**
    * Проверка корректности названия канала
    * @param {string} channelName Название канала
-   * @returns {boolean} Название есть в списке каналов?
+   * @returns {Promise<boolean>} Название есть в списке каналов?
    */
   async checkCorrectChannel(channelName = "") {
     if (!channelName) {
@@ -52,4 +52,4 @@ class ModelNsfw {
   }
 }
 
-module.exports = ModelNsfw;
+export default ModelNsfw;

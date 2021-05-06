@@ -1,6 +1,8 @@
-const OPTIONS_UPDATE = require("../const/optionsUpdateBD");
+import { Model, Document } from "mongoose";
+import OPTIONS_UPDATE from "../const/optionsUpdateBD";
+import { ISubscribe } from "../schema/subscribe";
 
-const getConnection = require("./getConnection");
+import getConnection from "./getConnection";
 
 /**
  * @class
@@ -8,16 +10,19 @@ const getConnection = require("./getConnection");
  * Используется БД
  */
 class ManageSubscribe {
-  #nameSubscribe = "";
+  /**
+   * Название подписки
+   */
+  private nameSubscribe: string;
   /**
    * Подписка с использованием БД
    * @param {string} nameSubscribe Название подписки
    */
-  constructor(nameSubscribe) {
+  constructor(nameSubscribe: string) {
     if (!nameSubscribe) {
       throw new Error("nameSubscribe empty!");
     }
-    this.#nameSubscribe = nameSubscribe;
+    this.nameSubscribe = nameSubscribe;
   }
 
   /**
@@ -25,11 +30,11 @@ class ManageSubscribe {
    * @param {string|number} chatId
    * @returns {Promise}
    */
-  async subscribe(chatId) {
+  async subscribe(chatId: string) {
     // todo: Добавить проверку на chatId!==undefined
     const cnn = await getConnection();
-    const Subscribe = cnn.model("Subscribe");
-    const query = { chatId, typeSubscribe: this.#nameSubscribe };
+    const Subscribe = cnn.model<ISubscribe>("Subscribe");
+    const query = { chatId, typeSubscribe: this.nameSubscribe };
     return await Subscribe.findOneAndUpdate(query, query, OPTIONS_UPDATE);
   }
 
@@ -38,11 +43,14 @@ class ManageSubscribe {
    * @param {string|number} chatId
    * @returns {Promise}
    */
-  async unsubscribe(chatId) {
+  async unsubscribe(chatId: string) {
     // todo: Добавить проверку на chatId!==undefined
     const cnn = await getConnection();
-    const Subscribe = cnn.model("Subscribe");
-    return await Subscribe.deleteMany({ chatId, typeSubscribe: "friday" });
+    const Subscribe = cnn.model<ISubscribe>("Subscribe");
+    return await Subscribe.deleteMany({
+      chatId,
+      typeSubscribe: this.nameSubscribe,
+    });
   }
 
   /**
@@ -51,12 +59,13 @@ class ManageSubscribe {
    */
   async getChatIdsForMailing() {
     const conn = await getConnection();
-    const Subscribe = conn.model("Subscribe");
+    const Subscribe = conn.model<ISubscribe>("Subscribe");
     // Собрать все задания, которые нужно выполнить
     const tasks = await Subscribe.find({
-      typeSubscribe: this.#nameSubscribe,
+      typeSubscribe: this.nameSubscribe,
     });
     return tasks.map((t) => t.chatId);
   }
 }
-module.exports = ManageSubscribe;
+
+export default ManageSubscribe;

@@ -35,6 +35,4 @@ const gifvRecord = {
   media: null,
 };
 
-module.exports.gifvRecord = gifvRecord;
-module.exports.mp4Record = mp4Record;
-module.exports.pictureRecord = pictureRecord;
+export { gifvRecord, mp4Record, pictureRecord };

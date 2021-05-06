@@ -1,11 +1,11 @@
-const assert = require("assert");
+import assert from "assert";
 
-const Reddit = require("../src/lib/reddit");
-const {
+import Reddit from "./reddit";
+import {
   gifvRecord,
   pictureRecord,
   mp4Record,
-} = require("./mocData/redditRecords");
+} from "../../test/mocData/redditRecords";
 
 const reddit = new Reddit();
 
@@ -21,7 +21,8 @@ describe("Проверка класса lib/reddit", () => {
       const result = promises[0];
       assert.deepStrictEqual(result, {
         url: "https://i.imgur.com/Xsz22CR.mp4",
-        title: "Bouncing Out of Her Bra",
+        caption: "Bouncing Out of Her Bra",
+        preview: undefined,
       });
     });
     it("Успешная обработка mp4", async () => {
@@ -31,7 +32,8 @@ describe("Проверка класса lib/reddit", () => {
       assert.deepStrictEqual(result, {
         url: "https://v.redd.it/x6mmhat6/DASH_720.mp4",
         urlAudio: "https://v.redd.it/x6mmhat6/DASH_audio.mp4",
-        title: "Nice",
+        caption: "Nice",
+        preview: undefined,
       });
     });
   });

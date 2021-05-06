@@ -1,7 +1,14 @@
-const express = require("express");
-require("dotenv").config();
+import express, { Router } from "express";
+import * as dotenv from "dotenv";
+
+import type TelegramBot from "./telegramBot";
+
+dotenv.config();
+
 const BASE_URL =
   process.env.APP_URL || "https://nfsw-telegram-bot.herokuapp.com:443";
+
+interface TModel extends TelegramBot {}
 
 /**
  * @typedef {import('../lib/telegramBot.js')} TelegramBot
@@ -12,13 +19,15 @@ const BASE_URL =
  * 1. Создаёт веб-хук для бота
  * 2. Содержит метод поиска подписчиков
  */
-class AppBotRouter {
+class AppBotRouter<TypeBot extends TelegramBot> {
+  bot: TypeBot;
+  router: Router;
   /**
    * Создаёт для бота веб=хук и привязывает его к адресу.
    * @param {TelegramBot} bot Бот
    * @param {string} baseUrl URL апи, к которому привязать веб-хук
    */
-  constructor(bot, baseUrl) {
+  constructor(bot: TypeBot, baseUrl: string) {
     this.bot = bot;
     const urlWebHook = `${BASE_URL}${baseUrl}/webhook`;
     this.router = express.Router();
@@ -33,11 +42,11 @@ class AppBotRouter {
    * Возвращает список ID чатов для рассылки
    */
   async getChatForMailing() {
-    const ids = await this.bot.manageSubscribe.getChatIdsForMailing();
+    const ids = await this.bot.manageSubscribe?.getChatIdsForMailing();
     const promiseArray = [];
-    for (const chatId of ids) {
+    for (const chatId of ids || []) {
       promiseArray.push(
-        this.#canSendMessage(chatId).catch(() => ({
+        this.canSendMessage(chatId).catch(() => ({
           chatId: chatId,
           possibleSend: false,
         }))
@@ -46,8 +55,8 @@ class AppBotRouter {
     const promise = Promise.all(promiseArray);
     return promise
       .then((array) =>
-        array.reduce((acc, item) => {
-          if (item.possibleSend) {
+        array.reduce((acc: string[], item) => {
+          if (item && item.possibleSend) {
             acc.push(item.chatId);
           }
           return acc;
@@ -61,7 +70,7 @@ class AppBotRouter {
    * @param {string | number} chatId ID чата
    * @returns {Promise<Object>}
    */
-  async #canSendMessage(chatId) {
+  private async canSendMessage(chatId: string) {
     const { bot } = this.bot;
     try {
       const info = await bot.getChat(chatId);
@@ -80,4 +89,4 @@ class AppBotRouter {
     }
   }
 }
-module.exports = AppBotRouter;
+export default AppBotRouter;

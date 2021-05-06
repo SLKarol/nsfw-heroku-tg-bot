@@ -1,11 +1,11 @@
-const probe = require("probe-image-size");
+import probe from "probe-image-size";
 
 /**
  * Изображение годно к отправке в телеграмм?
  * @param {string} url Адрес изображения
  * @returns {boolean} Корректно для отправки
  */
-async function isCorrectImage(url) {
+async function isCorrectImage(url: string) {
   if (!url.match(/.(jpg|jpeg|png|gif)$/i)) return false;
   let re = false;
   try {
@@ -28,7 +28,7 @@ async function isCorrectImage(url) {
  * @param {number} height
  * @returns {string} 4:2 или 4:9 и т.д.
  */
-function calculateRatio(width, height) {
+function calculateRatio(width: number, height: number) {
   const c = gcd(width, height);
   return `${width / c}:${height / c}`;
 }
@@ -39,12 +39,12 @@ function calculateRatio(width, height) {
  * @param {number} height
  * @returns {boolean} Соотношение корректное для отправки в телеграмм?
  */
-const isCorrectRatio = (width, height) =>
+const isCorrectRatio = (width: number, height: number) =>
   !calculateRatio(width, height)
     .split(":")
     .some((q) => +q >= 20);
 
-function gcd(a, b) {
+function gcd(a: number, b: number) {
   if (b > a) {
     let temp = a;
     a = b;
@@ -58,4 +58,4 @@ function gcd(a, b) {
   return a;
 }
 
-module.exports = isCorrectImage;
+export default isCorrectImage;

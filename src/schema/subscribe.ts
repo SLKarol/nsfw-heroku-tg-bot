@@ -1,8 +1,11 @@
-const mongoose = require("mongoose");
+import { Schema, Document } from "mongoose";
 
-const Schema = mongoose.Schema;
+export interface ISubscribe extends Document {
+  chatId: string;
+  typeSubscribe: string;
+}
 
-const subscribeSchema = new Schema({
+export const SubscribeSchema: Schema = new Schema({
   /**
    * Чат, который вызвал это событие
    */
@@ -18,4 +21,3 @@ const subscribeSchema = new Schema({
     required: true,
   },
 });
-module.exports = subscribeSchema;

@@ -1,14 +1,15 @@
-const NodeTelegramBot = require("node-telegram-bot-api");
+import NodeTelegramBot from "node-telegram-bot-api";
 
-const ManageSubscribe = require("./manageSubscribe");
+import { IRedditApiRerod, RedditMediaTelegram } from "../types/reddit";
+import {
+  CreateBot,
+  CustomBotCommand,
+  ParsedCommandText,
+  BotCommandHandler,
+  MapAlbumFunction,
+} from "../types/telegramBot";
 
-/**
- * @typedef {Object} ParsedCommandText
- * @property {string} text - Введенный текст
- * @property {string|undefined} command - Введённая команда
- * @property {string|undefined} bot - Бот, к которому обратились
- * @property {Array|undefined} commandArgs - Аргументы к введённой команде
- */
+import ManageSubscribe from "./manageSubscribe";
 
 const regexUserText = /^\/([^@\s]+)@?(?:(\S+)|)\s?([\s\S]+)?$/i;
 
@@ -25,6 +26,8 @@ const FUNNY_REPLY_TEXT =
  * В метод assignCommands нужно принести список команд и тогда бот научится их выполнять.
  */
 class TelegramBot {
+  bot: NodeTelegramBot;
+  manageSubscribe: ManageSubscribe | null;
   /**
    * Конструктор
    * @param {Object} props
@@ -32,7 +35,7 @@ class TelegramBot {
    * @param {NodeTelegramBot.BotCommand[]?} props.commands массив команд для построения подсказки
    * @param {string} props.mailingName Название рассылки
    */
-  constructor({ token, commands = [], mailingName = "" }) {
+  constructor({ token, commands = [], mailingName = "" }: CreateBot) {
     this.bot = new NodeTelegramBot(token, OPTIONS);
     this.manageSubscribe = mailingName
       ? new ManageSubscribe(mailingName)
@@ -44,10 +47,10 @@ class TelegramBot {
 
   /**
    * Назначить справку для команд бота
-   * @param {Array} listCommand
+   * @param {Array<CustomBotCommand>} listCommand
    * @returns {Promise<boolean>}
    */
-  setCommandHelp(listCommand) {
+  setCommandHelp(listCommand: CustomBotCommand[]) {
     return this.bot.setMyCommands(
       listCommand.filter((cmd) => {
         const { hint = false } = cmd;
@@ -61,7 +64,7 @@ class TelegramBot {
    * @param {string} text
    * @returns {ParsedCommandText} Разобранный текст
    */
-  #parseUserText(text) {
+  private parseUserText(text: string): ParsedCommandText {
     const parts = regexUserText.exec(text);
     const command = parts && parts[1];
     const bot = parts && parts[2];
@@ -76,14 +79,14 @@ class TelegramBot {
    * Назначить команды для бота
    * @param {Array} commands
    */
-  assignCommands(commands) {
+  assignCommands(commands: BotCommandHandler[]) {
     this.bot.on("message", (msg) => {
       const {
-        text,
+        text = "",
         chat: { id: chatId },
       } = msg;
       // Разобрать текст сообщения
-      const parsedMessage = this.#parseUserText(text);
+      const parsedMessage = this.parseUserText(text);
       // Обработка команд
       //--- Если ввели обычный текст. Бот его не понимает.
       if (!parsedMessage.command && text) {
@@ -105,7 +108,7 @@ class TelegramBot {
    * @param {string} message
    * @returns {string}
    */
-  funnyReply(message) {
+  funnyReply(message: string) {
     const replies = FUNNY_REPLY_TEXT.split("|");
     const re = replies[Math.floor(Math.random() * replies.length)];
     return `${re}
@@ -115,23 +118,21 @@ class TelegramBot {
   /**
    * Группировка изображений для создания альбомов, пригодных для отправки в телеграм.
    * По сути своей список изображений разбивается на 10 частей, маппится к телеграм-альбому
-   * @param {Array} friDay Массив изображений/видео
+   * @param {Array<IRedditApiRerod>} friDay Массив изображений/видео
    * @param {Function} callbackMap Функция-мап, которая преобразует изображения в формат телеграм-медиа
-   * @returns {Array} Медиа-альбомы
+   * @returns {Array<[]>} Медиа-альбомы
    */
-  createAlbums(friDay, callbackMap) {
+  createAlbums(friDay: IRedditApiRerod[], callbackMap: MapAlbumFunction) {
     //массив, в который будет выведен результат.
-    let fridayMessages = [];
+    let fridayMessages: RedditMediaTelegram[][] = [];
     const size = 10;
     // Получить массив из частей по size штук
     for (let i = 0; i < Math.ceil(friDay.length / size); i++) {
-      fridayMessages[i] = friDay.slice(i * size, i * size + size);
+      const array = friDay.slice(i * size, i * size + size);
       // Подготовить эти 10 записей к отправке в телеграм
-      if (callbackMap) {
-        fridayMessages[i] = fridayMessages[i].map(callbackMap);
-      }
+      fridayMessages[i] = array.map(callbackMap);
     }
     return fridayMessages;
   }
 }
-module.exports = TelegramBot;
+export default TelegramBot;

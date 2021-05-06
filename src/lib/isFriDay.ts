@@ -1,9 +1,13 @@
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
+
+type ResponsePublicHolidays = {
+  date: string;
+};
 
 /**
  * Сегодня разве пятница или праздник?
  */
-module.exports = isFriDay = async () => {
+export default async function isFriDay() {
   /** Текущий день */
   const today = new Date();
   /** День недели */
@@ -19,9 +23,9 @@ module.exports = isFriDay = async () => {
     `https://date.nager.at/api/v2/PublicHolidays/${year}/RU`
   );
   /** @type {Array} */
-  const data = await response.json();
+  const data = (await response.json()) as ResponsePublicHolidays[];
   /** гггг-мм-дд */
   const sDate = today.toISOString().split("T")[0];
   // Есть праздничный день?
   return data.some((r) => r.date === sDate);
-};
+}

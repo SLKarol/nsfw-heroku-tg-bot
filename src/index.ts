@@ -1,20 +1,26 @@
-const path = require("path");
-const express = require("express");
-const cors = require("cors");
-const asyncHandler = require("express-async-handler");
+import path from "path";
+import express, {
+  Request,
+  Response,
+  NextFunction,
+  ErrorRequestHandler,
+} from "express";
+import cors from "cors";
+import asyncHandler from "express-async-handler";
+import * as dotenv from "dotenv";
 
+import TOKEN from "./const/token.js";
+import Reddit from "./lib/reddit";
+import NSFWBot from "./bots/NSFWBot";
+import FridayRouter from "./routes/fridayRouter";
+import ModelNsfw from "./lib/modelNsfw";
+import authMiddleware from "./middleware/auth";
+import authRoutes from "./routes/auth";
+import getBashContent from "./controllers/bash";
+import isFriDay from "./lib/isFriDay";
+
+dotenv.config();
 const PORT = process.env.PORT || 5000;
-const TOKEN = require("./src/const/token.js");
-
-const NSFWBot = require("./src/bots/NSFWBot");
-const Reddit = require("./src/lib/reddit");
-const FridayRouter = require("./src/routes/fridayRouter");
-const ModelNsfw = require("./src/lib/modelNsfw");
-
-const authMiddleware = require("./src/middleware/auth");
-const authRoutes = require("./src/routes/auth");
-const getBashContent = require("./src/controllers/bash");
-const isFriDay = require("./src/lib/isFriDay");
 
 const app = express();
 const db = new ModelNsfw();
@@ -51,8 +57,17 @@ app.post(
   })
 );
 
+app.use("*", (req, res, next) => {
+  res.send("<h1>Welcome to your simple server! Awesome right</h1>");
+});
+
 // Error handling
-app.use(function (err, req, res, next) {
+app.use(function (
+  err: ErrorRequestHandler,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   if (err.name === "UnauthorizedError") {
     // Send the error rather than to show it on the console
     res.status(401).send(err);

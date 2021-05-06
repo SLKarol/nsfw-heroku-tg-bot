@@ -1,6 +1,8 @@
-const OPTIONS_UPDATE = {
-  new: true,
-  upsert: true,
-  setDefaultsOnInsert: true,
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var OPTIONS_UPDATE = {
+    new: true,
+    upsert: true,
+    setDefaultsOnInsert: true,
 };
-module.exports = OPTIONS_UPDATE;
+exports.default = OPTIONS_UPDATE;

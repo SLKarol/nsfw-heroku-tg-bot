@@ -1,25 +1,27 @@
-const delay = require("@stanislavkarol/delay");
+import delay from "@stanislavkarol/delay";
 
-const COMMANDS = require("../const/commands");
+import { BotCommandHandler, ParsedCommandText } from "../types/telegramBot";
+import { RedditMediaTelegram } from "../types/reddit";
 
-const TelegramBot = require("../lib/telegramBot");
+import COMMANDS from "../const/commands";
+import type Reddit from "../lib/reddit";
+import type ModelNsfw from "../lib/modelNsfw";
 
-/**
- * @typedef {import('../lib/reddit')} Reddit
- * @typedef {import('../lib/modelNsfw')} ModelNsfw
- */
+import TelegramBot from "../lib/telegramBot";
 
 /**
  * Телеграм-бот для nsfw
  */
 class NSFWBot extends TelegramBot {
+  db: ModelNsfw;
+  reddit: Reddit;
   /**
    * Телеграм-бот для reddit/nsfw
    * @param {string} token
    * @param {Reddit} reddit
    * @param {ModelNsfw} db - База данных
    */
-  constructor(token, reddit, db) {
+  constructor(token: string, reddit: Reddit, db: ModelNsfw) {
     super({
       token,
       commands: COMMANDS,
@@ -27,13 +29,13 @@ class NSFWBot extends TelegramBot {
     });
     this.db = db;
     this.reddit = reddit;
-    this.#setHandleCommands();
+    this.setHandleCommands();
   }
 
   /**
    * Назначить обработчики команд
    */
-  #setHandleCommands() {
+  private setHandleCommands() {
     const commands = [
       {
         command: "friday",
@@ -63,43 +65,47 @@ class NSFWBot extends TelegramBot {
         command: "channels",
         handler: this.listChannelsCommand.bind(this),
       },
-    ];
+    ] as BotCommandHandler[];
     this.assignCommands(commands);
   }
 
   /**
-   * Обработка команды бота /friday
+   * Обработка команды /friday
    * @param {string|number} chatId ID Чата
-   * @param {TelegramBot.ParsedCommandText} parsedMessage Команда боту
+   * @param {ParsedCommandText} parsedMessage Команда боту
    */
-  async fridayCommand(chatId, parsedMessage) {
+  async fridayCommand(chatId: string, parsedMessage: ParsedCommandText) {
     const requestChannelInfo = await this.getChannelInfo(parsedMessage);
     if (!requestChannelInfo.correct) {
       return this.bot.sendMessage(chatId, "Увы, введён незнакомый канал.");
     }
     const { name } = requestChannelInfo;
     // Получить параметр с количеством записей:
-    const limit = this.#getMaxCountRecords(parsedMessage);
-    this.bot
-      .sendMessage(chatId, `Канал *${name}* сообщает ...`, {
-        parse_mode: "Markdown",
-      })
-      .then(() => this.reddit.getNewRecords({ name, limit }))
+    const limit = this.getMaxCountRecords(parsedMessage);
+    // Отправка контента в телеграм
+    await this.bot.sendMessage(chatId, `Канал *${name}* сообщает ...`, {
+      parse_mode: "Markdown",
+    });
+
+    this.reddit
+      .getNewRecords({ name, limit })
       .then((records) => {
         if (!records.length) {
-          return this.bot.sendMessage(
-            chatId,
-            "На канале не найдено материалов."
-          );
+          return this.bot.sendMessage(chatId, "На канале нет новостей.");
         }
         const fridayMessages = this.createAlbums(
           records,
           this.reddit.mapRedditForTelegram
         );
-        return this.sendFridayContent({ chatId, fridayMessages });
+        return this.sendFridayContent({ chatId, fridayMessages }) as any;
       })
       .then(() => this.bot.sendMessage(chatId, "На этом у меня всё."))
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        this.bot.sendMessage(chatId, `В работе возникла ошибка:\n${err}`, {
+          parse_mode: "Markdown",
+        });
+      });
   }
 
   /**
@@ -108,19 +114,25 @@ class NSFWBot extends TelegramBot {
    * @param {string|number} props.chatId ID чата
    * @param {Array} props.fridayMessages Пятничный контент в виде альбомов
    */
-  sendFridayContent = ({ chatId, fridayMessages }) => {
+  sendFridayContent = ({
+    chatId,
+    fridayMessages,
+  }: {
+    chatId: string;
+    fridayMessages: RedditMediaTelegram[][];
+  }) => {
     const { bot } = this;
     const promises = [];
     for (const group of fridayMessages) {
       let promise;
       if (group.length > 1) {
-        promise = bot.sendMediaGroup(chatId, group);
+        promise = bot.sendMediaGroup(chatId, group as any);
       } else {
         // Если это всего лишь одно фото, то отправить одно фото
         const [photo] = group;
-        promise = bot.sendPhoto(chatId, photo.media, {
+        promise = bot.sendPhoto(chatId, photo.media as string, {
           disable_notification: true,
-          caption: photo.caption,
+          caption: photo.title,
         });
         // .catch((err) => err);
       }
@@ -140,13 +152,12 @@ class NSFWBot extends TelegramBot {
   /**
    * Обработка команды бота /subscribe
    * @param {string|number} chatId ID канала
-   * @param {TelegramBot} bot Бот
    */
-  subscribeCommand(chatId) {
+  subscribeCommand(chatId: string) {
     const { bot } = this;
     bot
       .sendMessage(chatId, "Подписаться на рассылку...")
-      .then(() => this.manageSubscribe.subscribe(chatId))
+      .then(() => this.manageSubscribe?.subscribe(chatId))
       .then(() => bot.sendMessage(chatId, "Задание принято."))
       .catch((e) => {
         console.error(e);
@@ -161,13 +172,12 @@ ${e}`
   /**
    * Обработка команды бота /unsubscribe
    * @param {string|number} chatId ID канала
-   * @param {TelegramBot} bot Бот
    */
-  unSubscribeCommand(chatId) {
+  unSubscribeCommand(chatId: string) {
     const { bot } = this;
     bot
       .sendMessage(chatId, "Отписаться от рассылки...")
-      .then(() => this.manageSubscribe.unsubscribe(chatId))
+      .then(() => this.manageSubscribe?.unsubscribe(chatId))
       .then(() => bot.sendMessage(chatId, "Рассылка не будет приходить."))
       .catch((e) => {
         console.error(e);
@@ -182,13 +192,12 @@ ${e}`
   /**
    * Обработка команды бота /quit
    * @param {string|number} chatId ID канала
-   * @param {TelegramBot} bot Бот
    */
-  quitCommand(chatId) {
+  quitCommand(chatId: string) {
     const { bot } = this;
     bot
       .sendMessage(chatId, "Я ухожу...")
-      .then(() => this.manageSubscribe.unsubscribe(chatId))
+      .then(() => this.manageSubscribe?.unsubscribe(chatId))
       .then(() => bot.leaveChat(chatId))
       .catch((e) => {
         console.error(e);
@@ -205,9 +214,9 @@ ${e}`
    * todo: научить бот мерджить аудио и видеодорожки.
    * @param {string|number} chatId ID канала
    * @param {TelegramBot} bot Бот
-   * @param {TelegramBot.ParsedCommandText} parsedMessage Команда боту
+   * @param {ParsedCommandText} parsedMessage Команда боту
    */
-  async videoCommand(chatId, parsedMessage) {
+  async videoCommand(chatId: string, parsedMessage: ParsedCommandText) {
     const requestChannelInfo = await this.getChannelInfo(parsedMessage);
     if (!requestChannelInfo.correct) {
       return this.bot.sendMessage(chatId, "Увы, введён незнакомый канал.");
@@ -215,7 +224,7 @@ ${e}`
     const { bot } = this;
     const { name } = requestChannelInfo;
     // Получить параметр с количеством записей:
-    const limit = this.#getMaxCountRecords(parsedMessage, 10);
+    const limit = this.getMaxCountRecords(parsedMessage, 10);
 
     bot
       .sendMessage(chatId, `Канал *${name}* сообщает ...`, {
@@ -228,7 +237,7 @@ ${e}`
         })
       )
       .then((list) => {
-        if (!list.length) {
+        if (list === null || !list.length) {
           return bot.sendMessage(chatId, "Новых видео не найдено.");
         }
         const listAlbums = this.createAlbums(
@@ -236,7 +245,7 @@ ${e}`
           this.reddit.mapVideoRedditForTelegram
         );
 
-        return this.sendFridayContentVideo({ chatId, list: listAlbums });
+        return this.sendFridayContentVideo({ chatId, list: listAlbums }) as any;
       })
       .catch((e) => {
         console.error(e);
@@ -254,29 +263,40 @@ ${e}`
    * @param {string|number} props.chatId ID чата
    * @param {Array} props.list Массив альбомов
    */
-  async sendFridayContentVideo({ chatId, list }) {
+  async sendFridayContentVideo({
+    chatId,
+    list,
+  }: {
+    chatId: string;
+    // list: RedditMediaTelegram[][] | RedditMediaTelegram[];
+    list: (RedditMediaTelegram | RedditMediaTelegram[])[];
+  }) {
+    const statusOk = { status: "ok" };
     if (!list.length) {
-      return process.nextTick();
+      return Promise.resolve(statusOk);
     }
     const { bot } = this;
     const promises = [];
     for (const group of list) {
       const isArray = Array.isArray(group);
       let promise;
-      if (group.length > 1 && isArray) {
-        promise = bot.sendMediaGroup(chatId, group);
+      if ((group as RedditMediaTelegram[]).length > 1 && isArray) {
+        promise = bot.sendMediaGroup(chatId, group as any);
       } else {
         // Если это всего лишь одно видео, то отправить одно видео
-        const video = isArray ? group[0] : group;
-        promise = bot.sendVideo(chatId, video.media, {
+        const video = (isArray
+          ? (group as RedditMediaTelegram[])[0]
+          : group) as RedditMediaTelegram;
+        const { caption, media } = video;
+        promise = bot.sendVideo(chatId, media as Buffer | string, {
           disable_notification: true,
-          caption: video.caption,
+          caption,
         });
       }
       promises.push(
         promise
           .then(() => delay(700))
-          .then(() => ({ status: "ok" }))
+          .then(() => statusOk)
           .catch((err) => {
             console.error("sendFridayContent Error: ", err);
             return { status: "error", error: err };
@@ -289,9 +309,8 @@ ${e}`
   /**
    * Обработка команды бота /help
    * @param {string|number} chatId ID канала
-   * @param {TelegramBot} bot Бот
    */
-  helpCommand(chatId) {
+  helpCommand(chatId: string) {
     const { bot } = this;
     let helpText = `Телеграм-бот, созданный для развлечения, а не для работы.\n\n*Доступные команды:*\n`;
     helpText += COMMANDS.reduce((acc, cmd) => {
@@ -310,7 +329,7 @@ ${e}`
    * Вывести список каналов
    * @param {string|number} chatId
    */
-  listChannelsCommand(chatId) {
+  listChannelsCommand(chatId: string) {
     const { bot } = this;
     this.db
       .getListChannels()
@@ -331,9 +350,9 @@ ${e}`
 
   /**
    * Получить имя канала
-   * @param {TelegramBot.ParsedCommandText} parsedMessage Команда
+   * @param {ParsedCommandText} parsedMessage Команда
    */
-  async getChannelInfo(parsedMessage) {
+  async getChannelInfo(parsedMessage: ParsedCommandText) {
     const { commandArgs = [] } = parsedMessage;
     let requestChannelInfo = { name: "", correct: false };
     // Проверка корректности названия канала
@@ -353,14 +372,17 @@ ${e}`
 
   /**
    * Получить из команды максимальное количество записей
-   * @param {TelegramBot.ParsedCommandText} parsedMessage Команда боту
+   * @param {ParsedCommandText} parsedMessage Команда боту
    * @param {number} defaultMaxCount - По умолчанию
    * @returns {number} количество записей
    */
-  #getMaxCountRecords(parsedMessage, defaultMaxCount = 20) {
+  private getMaxCountRecords(
+    parsedMessage: ParsedCommandText,
+    defaultMaxCount = 20
+  ) {
     // Получить параметр с количеством записей:
     let limit = defaultMaxCount;
-    if (parsedMessage.commandArgs.length === 2) {
+    if (parsedMessage.commandArgs?.length === 2) {
       const paramLimit = parseInt(parsedMessage.commandArgs[1], 10);
       if (paramLimit !== NaN && paramLimit < 51 && paramLimit > 0) {
         limit = paramLimit;
@@ -369,4 +391,5 @@ ${e}`
     return limit;
   }
 }
-module.exports = NSFWBot;
+
+export default NSFWBot;

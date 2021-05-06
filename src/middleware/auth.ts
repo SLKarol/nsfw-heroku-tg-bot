@@ -1,13 +1,17 @@
-const jwt = require("jsonwebtoken");
+import * as dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+import { Request, Response, NextFunction } from "express";
+
+dotenv.config();
+
+type Token = {
+  userId: string;
+};
 
 /**
  * Миддлвар для проверки наличия авторизации
- * @param {*} req
- * @param {*} res
- * @param {*} next
- * @returns
  */
-module.exports = (req, res, next) => {
+function auth(req: Request, res: Response, next: NextFunction) {
   // const authHeader = req.get("Authorization");
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -15,9 +19,9 @@ module.exports = (req, res, next) => {
     return next();
   }
   const token = authHeader.split(" ")[1];
-  let decodedToken;
+  let decodedToken: Token;
   try {
-    decodedToken = jwt.verify(token, process.env.TOKEN_JWT);
+    decodedToken = jwt.verify(token, process.env.TOKEN_JWT || "") as Token;
   } catch (err) {
     req.isAuth = false;
     return next();
@@ -29,4 +33,6 @@ module.exports = (req, res, next) => {
   req.userId = decodedToken.userId;
   req.isAuth = true;
   next();
-};
+}
+
+export default auth;

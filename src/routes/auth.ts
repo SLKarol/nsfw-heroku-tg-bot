@@ -1,7 +1,7 @@
-const express = require("express");
-const { body } = require("express-validator");
+import express from "express";
+import { body } from "express-validator";
 
-const authController = require("../controllers/auth");
+import * as authController from "../controllers/auth";
 const router = express.Router();
 
 router.post(
@@ -16,4 +16,4 @@ router.post(
   authController.postLogin
 );
 
-module.exports = router;
+export default router;

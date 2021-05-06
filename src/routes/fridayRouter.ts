@@ -1,7 +1,18 @@
-const delay = require("@stanislavkarol/delay");
-const asyncHandler = require("express-async-handler");
+import delay from "@stanislavkarol/delay";
+import asyncHandler from "express-async-handler";
+// import { Request, Response } from "express";
+import express from "express";
 
-const AppBotRouter = require("../lib/appBotRouter");
+import type NSFWBot from "../bots/NSFWBot";
+import { IRedditApiRerod } from "../types/reddit";
+import { RecordBor } from "../types/bor";
+import {
+  RequestContent,
+  GetNSFWParams,
+  ParamAnalyzer,
+} from "../types/fridayRouter";
+
+import AppBotRouter from "../lib/appBotRouter";
 
 /**
  * @typedef {import('../bots/NSFWBot.js')} NSFWBot
@@ -11,13 +22,13 @@ const AppBotRouter = require("../lib/appBotRouter");
  * Создание апи-методов для работы с ботом.
  * Основан на AppBotRouter, так что веб-хук появится по умолчанию.
  */
-class FridayRouter extends AppBotRouter {
+class FridayRouter extends AppBotRouter<NSFWBot> {
   /**
    * Создаёт веб-хук и методы для работы с ботом
    * @param {NSFWBot} bot
    * @param {string} baseUrl URL апи, к которому привязать веб-хук
    */
-  constructor(bot, baseUrl) {
+  constructor(bot: NSFWBot, baseUrl: string) {
     super(bot, baseUrl);
     this.router.post("/sendFriday", this.sendFriday);
     this.router.post("/sendFridayVideo", this.sendFridayVideo);
@@ -30,39 +41,42 @@ class FridayRouter extends AppBotRouter {
    * Отправить всем подписчикам пятничную рассылку.
    * Если в параметре records ничего не передавать,
    * То будет запрос к reddit
-   * @param {Request} req
-   * @param {Response} res
    */
-  sendFriday = asyncHandler(async (req, res) => {
-    if (!req.isAuth) {
-      return res
-        .status(401)
-        .json({ message: "Ошибка авторизации", success: false });
+  sendFriday = asyncHandler(
+    async (req: express.Request, res: express.Response) => {
+      if (!req.isAuth) {
+        return res
+          .status(401)
+          .json({ message: "Ошибка авторизации", success: false });
+      }
+      const { records = [], name } = req.body;
+      // Получить Название канала
+      const infoChannel = await this.bot.getChannelInfo({
+        commandArgs: [name],
+        text: "",
+      });
+      // Получить ID Чатов для рассылки
+      const prChatIds = this.getChatForMailing();
+      const prFridayMessages = !records.length
+        ? this.bot.reddit.getNewRecords({ limit: 20, name: infoChannel.name })
+        : new Promise<IRedditApiRerod[]>((resolve) => resolve(records));
+      return Promise.all([prChatIds, prFridayMessages])
+        .then(([chatIds, records]) => {
+          // Защититься от повторного запроса
+          const arrayIds = Array.from(new Set(chatIds));
+          const fridayMessages = this.bot.createAlbums(
+            records,
+            this.bot.reddit.mapRedditForTelegram
+          );
+          const promises = arrayIds.map((chatId) =>
+            this.bot.sendFridayContent({ chatId, fridayMessages })
+          );
+          return Promise.all(promises);
+        })
+        .then((resultWork) => this.analyzeModerateWork(resultWork, res))
+        .catch((e) => res.status(400).json({ error: e }));
     }
-    const { records = [], name } = req.body;
-    // Получить Название канала
-    const infoChannel = await this.bot.getChannelInfo({ commandArgs: [name] });
-    // Получить ID Чатов для рассылки
-    const prChatIds = this.getChatForMailing();
-    const prFridayMessages = !records.length
-      ? this.bot.reddit.getNewRecords({ limit: 20, name: infoChannel.name })
-      : new Promise((resolve) => resolve(records));
-    return Promise.all([prChatIds, prFridayMessages])
-      .then(([chatIds, records]) => {
-        // Защититься от повторного запроса
-        const arrayIds = Array.from(new Set(chatIds));
-        const fridayMessages = this.bot.createAlbums(
-          records,
-          this.bot.reddit.mapRedditForTelegram
-        );
-        const promises = arrayIds.map((chatId) =>
-          this.bot.sendFridayContent({ chatId, fridayMessages })
-        );
-        return Promise.all(promises);
-      })
-      .then((resultWork) => this.analyzeModerateWork(resultWork, res))
-      .catch((e) => res.status(400).json({ error: e }));
-  });
+  );
 
   /**
    * Отправить всем подписчикам пятничную видео-рассылку.
@@ -74,7 +88,10 @@ class FridayRouter extends AppBotRouter {
   sendFridayVideo = asyncHandler(async (req, res) => {
     const { records = [], name = "nsfw", filterContent = true } = req.body;
     // Получить Название канала
-    const infoChannel = await this.bot.getChannelInfo({ commandArgs: [name] });
+    const infoChannel = await this.bot.getChannelInfo({
+      commandArgs: [name],
+      text: "",
+    });
     // Получить сообщения для рассылки
     const prFridayMessages = !records.length
       ? this.bot.reddit.getNewVideoRecords({
@@ -82,7 +99,7 @@ class FridayRouter extends AppBotRouter {
           name: infoChannel.name,
           filterContent,
         })
-      : new Promise((resolve) => resolve(records));
+      : new Promise<IRedditApiRerod[]>((resolve) => resolve(records));
     // Получить ID Чатов для рассылки
     const prChatIds = this.getChatForMailing();
 
@@ -111,11 +128,13 @@ class FridayRouter extends AppBotRouter {
           : [];
         return Promise.all(promises);
       })
-      .then((resultWork) => this.analyzeModerateWork(resultWork, res))
+      .then((resultWork) =>
+        this.analyzeModerateWork(resultWork as ParamAnalyzer[], res)
+      )
       .catch((e) => res.status(400).json({ error: e }));
   });
 
-  sendBOR = (req, res) => {
+  sendBOR = (req: express.Request, res: express.Response) => {
     if (!req.isAuth) {
       return res
         .status(401)
@@ -123,9 +142,9 @@ class FridayRouter extends AppBotRouter {
     }
     this.getChatForMailing()
       .then((chatIds) => {
-        const articles = Array.from(req.body);
+        const articles = Array.from(req.body) as RecordBor[];
         const promises = chatIds.map((chatId) =>
-          this.#sendBORContent({ chatId, articles })
+          this.sendBORContent({ chatId, articles })
         );
         return Promise.all(promises);
       })
@@ -140,9 +159,15 @@ class FridayRouter extends AppBotRouter {
    * @param {string|number} props.chatId ID чата
    * @param {Array} props.articles Массив сообщений
    */
-  #sendBORContent = ({ chatId, articles }) => {
+  private sendBORContent = ({
+    chatId,
+    articles,
+  }: {
+    chatId: string;
+    articles: RecordBor[];
+  }) => {
     const { bot } = this.bot;
-    const promises = [];
+    const promises: Promise<any>[] = [];
     articles.forEach((article) => {
       promises.push(
         bot
@@ -167,17 +192,18 @@ class FridayRouter extends AppBotRouter {
    * @param {boolean} params.filterContent - Фильтровать контент?
    * @param {Response} res
    */
-  getNSFW = (params, res) => {
-    const { limit = 20, name = "nsfw", filterContent = true } = params;
+  getNSFW = (params: Partial<GetNSFWParams>, res: express.Response) => {
+    const { limit = 20, name = "nsfw", filterContent = false } = params;
     // Определиться с количеством записей
     const count = +limit;
-    this.bot.reddit
+    return this.bot.reddit
       .getNewRecords({
         limit: count === NaN ? 20 : count > 50 ? 50 : count,
         name,
+        filterContent,
       })
       .then((records) => {
-        res.status(200).json({ records, name });
+        return res.status(200).json({ records, name });
       });
   };
 
@@ -189,7 +215,7 @@ class FridayRouter extends AppBotRouter {
    * @param {boolean} params.filterContent - Фильтровать контент?
    * @param {Response} res
    */
-  getVideoNSFW = (params, res) => {
+  getVideoNSFW = (params: GetNSFWParams, res: express.Response) => {
     const { limit = 20, name = "nsfw", filterContent = true } = params;
     // Определиться с количеством записей
     const count = +limit;
@@ -224,7 +250,10 @@ class FridayRouter extends AppBotRouter {
    * @param {Request} req
    * @param {Response} res
    */
-  getContent = (req, res) => {
+  getContent = (
+    req: express.Request<unknown, unknown, unknown, RequestContent>,
+    res: express.Response
+  ) => {
     const {
       type = "photo",
       channel = "nsfw",
@@ -232,25 +261,28 @@ class FridayRouter extends AppBotRouter {
       limit = 50,
     } = req.query;
     if (type === "photo") {
-      return this.getNSFW({ name: channel, filterContent, limit }, res);
+      return this.getNSFW({ name: channel, limit }, res);
     }
     if (type === "video") {
       return this.getVideoNSFW({ name: channel, filterContent, limit }, res);
     }
     res.status(422).json({
       status: false,
-      validationErrors: [{ type: "Unknown value" }],
+      validationErrors: [{ type: "Неизвестный тип содержимого" }],
     });
   };
 
   /**
    * Анализ и выдача результатов работы промисов
    * отправки модерируемого контента
-   * @param {Array} resultWork
+   * @param {Array<ParamAnalyzer>} resultWork
    * @param {Response} res
    * @returns
    */
-  analyzeModerateWork = (resultWork, res) => {
+  analyzeModerateWork = (
+    resultWork: ParamAnalyzer[],
+    res: express.Response
+  ) => {
     //resultWork это результат работы промисов.
     // Задача в том, чтобы найти промис, где есть ошибка
     const errorInPromise = resultWork.find((item) =>
@@ -265,4 +297,5 @@ class FridayRouter extends AppBotRouter {
     return res.status(200).json({ status: "ok" });
   };
 }
-module.exports = FridayRouter;
+
+export default FridayRouter;
