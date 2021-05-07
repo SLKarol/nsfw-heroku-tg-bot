@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { PureComponent, createRef, RefObject } from "react";
-import { withStyles, Theme } from "@material-ui/core/styles";
+import { withStyles, Theme, WithStyles } from "@material-ui/core/styles";
 
 import { downloadMedia } from "lib/media";
 
@@ -19,13 +19,11 @@ const styles = (theme: Theme) => ({
   },
 });
 
-type Props = {
+interface Props extends WithStyles<typeof styles> {
   url?: string;
   urlAudio?: string;
   title: string;
-  // classes: ReturnType<typeof styles>;
-  classes: any;
-};
+}
 
 class VideoContent extends PureComponent<Props, { download: boolean }> {
   videoRef: RefObject<HTMLVideoElement>;
