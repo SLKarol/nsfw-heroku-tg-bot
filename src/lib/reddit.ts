@@ -51,7 +51,7 @@ class Reddit {
     const records = await this.checkCorrectImages(recordsReddit);
     return records.reduce((acc: IRedditApiRerod[], record) => {
       if (record.correct) {
-        acc.push({ title: record.caption, url: record.url });
+        acc.push({ title: record.title || "", url: record.url });
       }
       return acc;
     }, []);
@@ -208,7 +208,7 @@ class Reddit {
         new Promise((resolve) =>
           resolve({
             url: (url as string).replace(".gifv", ".mp4"),
-            caption: title,
+            title,
             preview,
           })
         )
@@ -231,7 +231,7 @@ class Reddit {
               if (source !== null) {
                 const { src, type } = source.rawAttributes;
                 if (type === "video/mp4") {
-                  resolve({ url: src, caption: title, preview });
+                  resolve({ url: src, title, preview });
                 }
               }
               resolve(null);
@@ -252,7 +252,7 @@ class Reddit {
       const urlAudio = urlVideo.replace(fileName, "DASH_audio.mp4");
       listPromises.push(
         new Promise((resolve) =>
-          resolve({ url: urlVideo, caption: title, urlAudio, preview })
+          resolve({ url: urlVideo, title, urlAudio, preview })
         )
       );
       return listPromises;
@@ -262,7 +262,6 @@ class Reddit {
 
   /**
    * Получить записи reddit
-   * @param {RequestRedditRecords} props
    */
   private async requestRedditRecords({
     name = "nsfw",

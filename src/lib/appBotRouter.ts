@@ -8,8 +8,6 @@ dotenv.config();
 const BASE_URL =
   process.env.APP_URL || "https://nfsw-telegram-bot.herokuapp.com:443";
 
-interface TModel extends TelegramBot {}
-
 /**
  * @typedef {import('../lib/telegramBot.js')} TelegramBot
  */

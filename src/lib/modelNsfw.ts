@@ -1,3 +1,5 @@
+import { IChannel } from "../schema/channel";
+
 import { getDbConnection } from "./mongoDb";
 
 /**
@@ -14,7 +16,7 @@ class ModelNsfw {
       : { $or: [{ withVideo: true }, { withVideo: false }] };
     const db = await getDbConnection();
     const channels = db
-      .collection("nsfwChannels")
+      .collection<IChannel>("nsfwChannels")
       .find(filter)
       .sort({ withVideo: 1, name: 1 });
     const re = await channels.toArray();

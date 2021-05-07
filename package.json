@@ -33,7 +33,7 @@
     "@types/node-telegram-bot-api": "^0.51.1",
     "@types/probe-image-size": "^7.0.0",
     "cross-env": "^7.0.3",
-    "mocha": "^8.3.2",
+    "mocha": "^8.4.0",
     "nodemon": "^2.0.7",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.4"

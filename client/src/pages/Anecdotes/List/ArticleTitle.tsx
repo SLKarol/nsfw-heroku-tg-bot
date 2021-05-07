@@ -1,6 +1,7 @@
+import { FC } from "react";
 import Typography from "@material-ui/core/Typography";
 
-const ArticleTitle = ({ children }) => (
+const ArticleTitle: FC = ({ children }) => (
   <Typography variant="h6" gutterBottom>
     {children}
   </Typography>

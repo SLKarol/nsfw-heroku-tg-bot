@@ -1,13 +1,21 @@
+import { FC } from "react";
 import Button from "@material-ui/core/Button";
+
+import { ClickHandler } from "types/functions";
 
 import HeaderPage from "components/HeaderPage";
 
-const Header = ({ onClick, disable }) => (
+type Props = {
+  disabled: boolean;
+  onClick: ClickHandler;
+};
+
+const Header: FC<Props> = ({ onClick, disabled }) => (
   <HeaderPage title="Список анекдотов">
     <Button
       variant="outlined"
       size="small"
-      disabled={disable}
+      disabled={disabled}
       onClick={onClick}
     >
       Сделать рассылку

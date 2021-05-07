@@ -1,3 +1,4 @@
+import { FC } from "react";
 import { useHistory } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -21,7 +22,11 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const HeaderPage = ({ title, children }) => {
+type Props = {
+  title: string;
+};
+
+const HeaderPage: FC<Props> = ({ title, children }) => {
   const classes = useStyles();
   const history = useHistory();
   const onClickBack = () => history.push("/");

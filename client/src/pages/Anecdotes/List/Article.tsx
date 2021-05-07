@@ -1,11 +1,21 @@
+import { FC } from "react";
 import Checkbox from "@material-ui/core/Checkbox";
+
+import { OnCheck } from "types/functions";
 
 import styles from "./article.module.css";
 import ArticleTitle from "./ArticleTitle";
 import ArticleContent from "./ArticleContent";
 
-const Article = ({ title, id, content, onCheck, selected }) => {
-  const checked = selected.indexOf(id) > -1;
+type Props = {
+  id: string;
+  title: string;
+  content: string;
+  onCheck: OnCheck;
+  selected: boolean;
+};
+
+const Article: FC<Props> = ({ title, id, content, onCheck, selected }) => {
   return (
     <>
       <Checkbox
@@ -13,7 +23,7 @@ const Article = ({ title, id, content, onCheck, selected }) => {
         color="primary"
         name={id}
         onChange={onCheck}
-        checked={checked}
+        checked={selected}
       />
       <div className={styles.content}>
         <ArticleTitle>{title}</ArticleTitle>

@@ -1,10 +1,15 @@
+import { FC } from "react";
 import Checkbox from "@material-ui/core/Checkbox";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 
 import { useModerateStore } from "mobx/moderateFriday";
 
-const CheckMaterial = ({ url, title, checked }) => {
-  const { handleChangeSelect } = useModerateStore();
+const CheckMaterial: FC<{ url?: string; title: string; checked: boolean }> = ({
+  url = "",
+  title,
+  checked,
+}) => {
+  const { handleSelectMaterial } = useModerateStore();
 
   return (
     <figcaption>
@@ -14,7 +19,7 @@ const CheckMaterial = ({ url, title, checked }) => {
             name={url}
             color="primary"
             checked={checked}
-            onChange={handleChangeSelect}
+            onChange={handleSelectMaterial}
           />
         }
         label={title}

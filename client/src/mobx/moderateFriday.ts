@@ -1,42 +1,57 @@
-// import { URL, URLSearchParams } from "url";
 import { createContext, useContext } from "react";
 import { makeAutoObservable, runInAction } from "mobx";
 
+import { IRedditApiRerod, ResponseListRecords, TypeNSFW } from "types/nsfw";
+import { onChangeCheck, onChangeSelectValue } from "types/functions";
+import { StateResponse } from "types/common";
+
 import { ChannelsStore } from "mobx/channels";
 import { downloadMedia } from "lib/media";
+
+//! Исправить на динамичный выбор
+type WritableStringKeys = "typeMailing" | "selectedChannel";
 
 export class ModerateFridayStore {
   /**
    * Стор списка каналов
    */
-  channelsStore;
-  /** Тип рассылки
-   * @type {string}
-   */
-  typeMailing = "photo";
+  channelsStore: ChannelsStore;
+  /** Тип рассылки */
+  typeMailing: TypeNSFW = "photo";
   /** Выбранный канал */
   selectedChannel = "";
   /** Записи для модерации */
-  recordsToModerate = [];
+  recordsToModerate: IRedditApiRerod[] = [];
   /** Статус доступности */
-  state = "done";
-  /** ID то есть- url) выбранных записей */
-  selectedRecords = [];
+  state: StateResponse = "done";
+  /** IDs то есть- urls выбранных записей */
+  selectedRecords: string[] = [];
   /** Ошибка работы с api*/
-  error = null;
+  error: string | null = null;
 
-  constructor(channelsStore) {
+  constructor() {
     makeAutoObservable(this);
-    this.channelsStore = new ChannelsStore(this);
+    this.channelsStore = new ChannelsStore(this.onLoadChannels);
   }
+
+  /**
+   * Реакция после загрузки списка каналов
+   */
+  onLoadChannels = () => {
+    const { list } = this.channelsStore;
+    const value = list.length ? list[0]._id : "";
+    this.handleChangeFilter({
+      target: { value, name: "selectedChannel" },
+    } as any);
+  };
 
   /**
    * Изменить значение
    * @param {Object} event
    */
-  handleChangeFilter = (event) => {
-    const { name, value } = event.target;
-    this[name] = value;
+  handleChangeFilter: onChangeSelectValue = (event) => {
+    const { name = "", value = "" } = event.target;
+    this[name as WritableStringKeys] = value as any;
     this.recordsToModerate = [];
     this.selectedRecords = [];
     this.error = null;
@@ -65,7 +80,7 @@ export class ModerateFridayStore {
         "Content-Type": "application/json",
       },
     });
-    const result = await response.json();
+    const result = (await response.json()) as ResponseListRecords;
     const { records } = result;
     runInAction(() => {
       this.state = "done";
@@ -88,13 +103,13 @@ export class ModerateFridayStore {
    * Обработка выбора картинки/фото
    * @param {Object} event
    */
-  handleChangeSelect = (event) => {
+  handleSelectMaterial: onChangeCheck = (event) => {
     const { name, checked } = event.target;
     const selectedSet = new Set(this.selectedRecords);
     if (checked) {
-      selectedSet.add(name);
+      selectedSet.add(name || "");
     } else {
-      selectedSet.delete(name);
+      selectedSet.delete(name || "");
     }
     this.selectedRecords = [...selectedSet];
   };
@@ -106,7 +121,7 @@ export class ModerateFridayStore {
     const channel = this.channelsStore.list.find(
       (c) => c._id === this.selectedChannel
     );
-    return channel.name;
+    return channel?.name || "";
   }
 
   /**
@@ -141,7 +156,10 @@ export class ModerateFridayStore {
     }
   };
 
-  __sendSelectedPhoto = (records, name) => {
+  /**
+   * Отправка выбранных фото в телеграмм
+   */
+  __sendSelectedPhoto = (records: IRedditApiRerod[], name: string) => {
     this.state = "pending";
     const token = localStorage.getItem("token");
 
@@ -152,14 +170,17 @@ export class ModerateFridayStore {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ records, name }),
-      // body: JSON.stringify({ records: [2128506], name }),
-    }).then(this.moderateFetchSuccess, this.moderateFetchFailure);
+    }).then(this.fetchModerateSuccess, this.fetchModerateFailure);
   };
 
-  __sendSelectedVideo = async (records, name) => {
+  /**
+   * Отправка выбранных видео в телеграмм
+   */
+  __sendSelectedVideo = async (records: IRedditApiRerod[], name: string) => {
     this.state = "pending";
     const token = localStorage.getItem("token");
     // Собрать видеозаписи
+    //! исправить на allSettled
     const recordsToPublish = await Promise.all(
       records.map(this.__mapVideoForTelegram)
     );
@@ -170,7 +191,7 @@ export class ModerateFridayStore {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ records: recordsToPublish, name }),
-    }).then(this.moderateFetchSuccess, this.moderateFetchFailure);
+    }).then(this.fetchModerateSuccess, this.fetchModerateFailure);
   };
 
   /**
@@ -178,14 +199,14 @@ export class ModerateFridayStore {
    * @param {Object} record запись из recordsToModerate
    * @returns {boolean}
    */
-  __filterSelectedRecords = (record) =>
+  __filterSelectedRecords = (record: IRedditApiRerod) =>
     this.selectedRecords.some((r) => r === record.url);
 
-  moderateFetchSuccess = (response) => {
+  fetchModerateSuccess = (response: Response) => {
     response.json().then(this.analyzeResponse);
   };
 
-  moderateFetchFailure = (error) => {
+  fetchModerateFailure = (error: unknown) => {
     this.state = "done";
     this.error = JSON.stringify(error);
   };
@@ -194,7 +215,7 @@ export class ModerateFridayStore {
    * Анализ ответа api
    * @param {Object} json
    */
-  analyzeResponse = (json) => {
+  analyzeResponse = (json: { status: string; error: { message: string } }) => {
     this.state = "error";
     // Найти ответ
     const { status, error } = json;
@@ -215,20 +236,34 @@ export class ModerateFridayStore {
    * @param {Object} record
    * @returns
    */
-  __mapVideoForTelegram = async (record) => {
-    const { title, url, urlAudio } = record;
-    const baseInfo = { is_video: true, title };
+  __mapVideoForTelegram = async (record: IRedditApiRerod) => {
+    const { title, url = "", urlAudio = "" } = record;
+    const baseInfo: {
+      is_video: boolean;
+      title: string;
+      url: string | number[];
+    } = {
+      is_video: true,
+      title,
+      url,
+    };
     const mediaData = await downloadMedia(url, urlAudio);
+    if (mediaData === null) {
+      return baseInfo;
+    }
+
     baseInfo.url = typeof mediaData === "string" ? url : Array.from(mediaData);
     return baseInfo;
   };
 }
 
-export const createStore = (channelsStore) => {
-  const store = new ModerateFridayStore(channelsStore);
+export const createStore = () => {
+  const store = new ModerateFridayStore();
   return store;
 };
-export const ModerateStoreContext = createContext({});
+export const ModerateStoreContext = createContext<ModerateFridayStore>(
+  {} as ModerateFridayStore
+);
 
 export const useModerateStore = () => {
   return useContext(ModerateStoreContext);

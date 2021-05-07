@@ -1,3 +1,5 @@
+import { ContentRSS } from "../types/bashOrg";
+
 /**
  * Запрос данных из баш. орг
  * @returns {Promise<Object>}
@@ -10,9 +12,9 @@ export function getListBashOrg() {
     },
   })
     .then((res) => res.json())
-    .then((json) => json);
+    .then((json: ContentRSS[]) => json);
 }
-export async function sendToTelegram(articles) {
+export async function sendToTelegram(articles: ContentRSS[]) {
   const token = localStorage.getItem("token");
   return fetch("/api/botFriday/sendBOR", {
     method: "POST",

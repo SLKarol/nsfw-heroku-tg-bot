@@ -13,8 +13,8 @@ const ListPhotos = () => {
         const { url, title, checked } = record;
         return (
           <figure key={url}>
-            <Photo url={url} title={title} />
-            <CheckMaterial title={title} checked={checked} url={url} />
+            <Photo url={url || ""} title={title} />
+            <CheckMaterial title={title} checked={checked} url={url || ""} />
           </figure>
         );
       })}

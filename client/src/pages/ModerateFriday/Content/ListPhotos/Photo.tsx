@@ -1,3 +1,4 @@
+import { FC } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
@@ -15,7 +16,7 @@ const useStyles = makeStyles((theme) => ({
  * @param {string} props.title - Название
  * @returns
  */
-const Photo = ({ url, title }) => {
+const Photo: FC<{ url: string; title: string }> = ({ url, title }) => {
   const classes = useStyles();
   return (
     <a href={url} target="_blank" rel="noopener noreferrer">

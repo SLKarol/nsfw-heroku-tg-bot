@@ -287,10 +287,10 @@ ${e}`
         const video = (isArray
           ? (group as RedditMediaTelegram[])[0]
           : group) as RedditMediaTelegram;
-        const { caption, media } = video;
+        const { title = "", media } = video;
         promise = bot.sendVideo(chatId, media as Buffer | string, {
           disable_notification: true,
-          caption,
+          caption: title,
         });
       }
       promises.push(

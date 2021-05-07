@@ -6,7 +6,10 @@ import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
  * @param {string} audioUrl Ссылка на аудио
  * @returns {Promise<Uint8Array>}
  */
-export async function downloadMedia(videoUrl, audioUrl = null) {
+export async function downloadMedia(
+  videoUrl: string,
+  audioUrl: string | null = null
+) {
   if (audioUrl === null) {
     return fetchFile(videoUrl);
   }
@@ -19,7 +22,7 @@ export async function downloadMedia(videoUrl, audioUrl = null) {
  * @param {string} audioUrl Ссылка на аудио
  * @returns {Promise<Uint8Array>}
  */
-async function mergeAudioVideo(videoUrl, audioUrl) {
+async function mergeAudioVideo(videoUrl: string, audioUrl: string) {
   let ffmpeg = createFFmpeg();
   await ffmpeg.load();
 
@@ -33,8 +36,8 @@ async function mergeAudioVideo(videoUrl, audioUrl) {
     return null;
   }
 
-  ffmpeg.FS("writeFile", "video.mp4", videoPromise);
-  ffmpeg.FS("writeFile", "audio.mp4", audioPromise);
+  ffmpeg.FS("writeFile", "video.mp4", videoPromise as Uint8Array);
+  ffmpeg.FS("writeFile", "audio.mp4", audioPromise as Uint8Array);
   await ffmpeg.run(
     "-i",
     "video.mp4",
@@ -56,7 +59,7 @@ async function mergeAudioVideo(videoUrl, audioUrl) {
  * @param {string} url
  * @returns
  */
-async function fetchMediaBlob(url) {
+async function fetchMediaBlob(url: string) {
   const response = await fetch(url);
   if (response.status !== 200) {
     return new Promise((resolve) => resolve(null));

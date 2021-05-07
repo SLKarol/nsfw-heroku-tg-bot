@@ -1,3 +1,4 @@
+import { FC } from "react";
 import Container from "@material-ui/core/Container";
 
 import { createStore, ModerateStoreContext } from "mobx/moderateFriday";
@@ -8,7 +9,7 @@ import Content from "./Content/Content";
 import Toolbar from "./Toolbar/Toolbar";
 import StatusBar from "./StatusBar/StatusBar";
 
-const ModerateFriday = () => {
+const ModerateFriday: FC = () => {
   const store = createStore();
 
   return (

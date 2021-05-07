@@ -1,8 +1,10 @@
+import { NSFWChannel, IRedditApiRerod, TypeNSFW } from "types/nsfw";
+
 /**
  * Отправка nsfw
  * @returns {Promise}
  */
-export async function sendNSFW(type) {
+export async function sendNSFW(type: TypeNSFW) {
   const token = localStorage.getItem("token");
   const url = type === "photo" ? "sendFriday" : "sendFridayVideo";
   const channels = await getListChannels();
@@ -44,7 +46,7 @@ export function getNSFW(limit = 20) {
  * @param {Array} records
  * @returns {Promise}
  */
-export function sendFriday(records) {
+export function sendFriday(records: IRedditApiRerod[]) {
   return fetch("/api/botFriday/sendFriday", {
     method: "POST",
     headers: {
@@ -65,5 +67,5 @@ export async function getListChannels() {
   });
   const result = await response.json();
   const { channels } = result;
-  return channels;
+  return channels as NSFWChannel[];
 }

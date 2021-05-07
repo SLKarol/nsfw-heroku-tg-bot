@@ -8,6 +8,8 @@ import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Backdrop from "@material-ui/core/Backdrop";
 
+import { ClickHandler, OnChange } from "types/functions";
+
 import { currentUserHasLogin } from "lib/user";
 
 const useStyles = makeStyles((theme) => ({
@@ -39,8 +41,7 @@ export default function SignIn() {
     return <Redirect to="/" />;
   }
 
-  // todo refactor this component
-  const onClick = (e) => {
+  const onClick: ClickHandler = (e) => {
     e.preventDefault();
     setBusy(true);
     fetch("/api/auth/login", {
@@ -74,7 +75,7 @@ export default function SignIn() {
         setBusy(false);
       });
   };
-  const onChange = (e) => {
+  const onChange: OnChange = (e) => {
     const { value, name } = e.target;
     if (name === "password") {
       setPassword(value);
@@ -91,7 +92,7 @@ export default function SignIn() {
         <Typography component="h1" variant="h5">
           Авторизация
         </Typography>
-        <form className={classes.form} noValidate disabled={busy}>
+        <form className={classes.form} noValidate>
           <TextField
             variant="outlined"
             margin="normal"
@@ -104,6 +105,7 @@ export default function SignIn() {
             autoFocus
             value={email}
             onChange={onChange}
+            disabled={busy}
           />
           <TextField
             variant="outlined"
@@ -115,8 +117,8 @@ export default function SignIn() {
             type="password"
             id="password"
             autoComplete="current-password"
-            password={password}
             onChange={onChange}
+            disabled={busy}
           />
           <Button
             type="submit"
@@ -125,6 +127,7 @@ export default function SignIn() {
             color="primary"
             className={classes.submit}
             onClick={onClick}
+            disabled={busy}
           >
             Sign In
           </Button>

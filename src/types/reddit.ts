@@ -9,7 +9,7 @@ export interface IRedditApiRerod {
   /**
    * Url картинки/видео
    */
-  url?: string; //string | Buffer; //ArrayLike<number> |
+  url?: string;
 
   /**
    * Это видео?
@@ -18,7 +18,7 @@ export interface IRedditApiRerod {
   /**
    * Характеристики видео
    */
-  media?: RedditApiMedia | Buffer | null; //RedditApiMedia | string | Buffer;
+  media?: RedditApiMedia | Buffer | null;
   /**
    * Картинка - превью
    */
@@ -73,10 +73,6 @@ export type RequestRedditRecords = {
  * Записи Reddit, состоящие из изображений/видео для отправки в телеграм
  */
 export interface RedditMediaTelegram extends Partial<IRedditApiRerod> {
-  /**
-   * Заголовок
-   */
-  caption: string;
   /**
    * Сообщение без ошибок?
    */

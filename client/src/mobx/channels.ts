@@ -1,14 +1,20 @@
 import { createContext, useContext } from "react";
 import { makeAutoObservable, runInAction } from "mobx";
 
+import { NSFWChannel } from "types/nsfw";
+
 import { getListChannels } from "lib/nsfw";
+import { EmptyFunction } from "types/functions";
+import { StateResponse } from "types/common";
 
 export class ChannelsStore {
-  list = [];
-  state = "done;";
+  // rootStore?: TRootStore;
+  list: NSFWChannel[] = [];
+  state: StateResponse = "done";
+  onLoadChannels?: EmptyFunction;
 
-  constructor(rootStore) {
-    this.rootStore = rootStore;
+  constructor(onLoadChannels?: EmptyFunction) {
+    this.onLoadChannels = onLoadChannels;
     makeAutoObservable(this);
   }
 
@@ -21,10 +27,9 @@ export class ChannelsStore {
     runInAction(() => {
       this.state = "done";
       this.list = channels;
-      const value = channels.length ? channels[0]._id : "";
-      this.rootStore.handleChangeFilter({
-        target: { value, name: "selectedChannel" },
-      });
+      if (this.onLoadChannels) {
+        this.onLoadChannels();
+      }
     });
   };
 }
