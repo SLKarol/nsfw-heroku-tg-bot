@@ -21,7 +21,7 @@ describe("Проверка класса lib/reddit", () => {
       const result = promises[0];
       assert.deepStrictEqual(result, {
         url: "https://i.imgur.com/Xsz22CR.mp4",
-        caption: "Bouncing Out of Her Bra",
+        title: "Bouncing Out of Her Bra",
         preview: undefined,
       });
     });
@@ -32,7 +32,7 @@ describe("Проверка класса lib/reddit", () => {
       assert.deepStrictEqual(result, {
         url: "https://v.redd.it/x6mmhat6/DASH_720.mp4",
         urlAudio: "https://v.redd.it/x6mmhat6/DASH_audio.mp4",
-        caption: "Nice",
+        title: "Nice",
         preview: undefined,
       });
     });
