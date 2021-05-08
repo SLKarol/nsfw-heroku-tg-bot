@@ -6,6 +6,8 @@
   "dependencies": {
     "@stanislavkarol/delay": "^1.0.3",
     "@stanislavkarol/get-bash-im-rss": "^1.1.1",
+    "@types/react-router": "^5.1.14",
+    "@types/react-router-dom": "^5.1.7",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^9.0.0",
@@ -42,7 +44,7 @@
     "dev": "cross-env NODE_ENV=development nodemon -r dotenv/config --watch 'src/**/*.ts' --exec 'ts-node --files' src/index.ts",
     "start": "node dist/index.js",
     "deploy": "git push heroku master",
-    "heroku-postbuild": "cd client && npm install && npm install --no-shrinkwrap && npm run build",
+    "heroku-postbuild": "cd client && npm install && npm run build",
     "build": "tsc",
     "postinstall": "npm run build",
     "test": "mocha"
