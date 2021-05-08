@@ -42,12 +42,16 @@
     "dev": "cross-env NODE_ENV=development nodemon -r dotenv/config --watch 'src/**/*.ts' --exec 'ts-node --files' src/index.ts",
     "start": "node dist/index.js",
     "deploy": "git push heroku master",
-    "heroku-prebuild": "cd client && npm install && npm run build",
+    "heroku-postbuild": "tsc & cd client/ && npm install && npm run build",
     "build": "tsc",
     "postinstall": "npm run build",
     "test": "mocha"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "cacheDirectories": [
+    "node_modules",
+    "client/node_modules"
+  ]
 }
