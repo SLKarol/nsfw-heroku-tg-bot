@@ -43,7 +43,6 @@
     "start": "node dist/index.js",
     "deploy": "git push heroku master",
     "heroku-postbuild": "tsc & cd client/ && npm install && npm run build",
-    "build": "tsc",
     "postinstall": "npm run build",
     "test": "mocha"
   },

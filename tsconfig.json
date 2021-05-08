@@ -70,7 +70,6 @@
     "client/**",
   ],
   "include": [
-    "src/**/*",
     "@types",
   ]
 }
