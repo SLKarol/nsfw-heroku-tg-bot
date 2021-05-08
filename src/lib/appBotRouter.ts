@@ -41,8 +41,9 @@ class AppBotRouter<TypeBot extends TelegramBot> {
    */
   async getChatForMailing() {
     const ids = await this.bot.manageSubscribe?.getChatIdsForMailing();
+    if (!ids) return [];
     const promiseArray = [];
-    for (const chatId of ids || []) {
+    for (const chatId of ids) {
       promiseArray.push(
         this.canSendMessage(chatId).catch(() => ({
           chatId: chatId,
@@ -51,16 +52,14 @@ class AppBotRouter<TypeBot extends TelegramBot> {
       );
     }
     const promise = Promise.all(promiseArray);
-    return promise
-      .then((array) =>
-        array.reduce((acc: string[], item) => {
-          if (item && item.possibleSend) {
-            acc.push(item.chatId);
-          }
-          return acc;
-        }, [])
-      )
-      .then((array) => Array.from(new Set(array)));
+    return promise.then((array) =>
+      array.reduce((acc: string[], item) => {
+        if (item && item.possibleSend) {
+          acc.push(item.chatId);
+        }
+        return acc;
+      }, [])
+    );
   }
 
   /**

@@ -121,7 +121,7 @@ class Reddit {
           const { title, url } = record;
           resolve(
             isCorrectImage(url || "").then((correct) => ({
-              caption: title,
+              title,
               url: url || "",
               correct,
             }))

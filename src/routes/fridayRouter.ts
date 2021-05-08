@@ -62,13 +62,11 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
         : new Promise<IRedditApiRerod[]>((resolve) => resolve(records));
       return Promise.all([prChatIds, prFridayMessages])
         .then(([chatIds, records]) => {
-          // Защититься от повторного запроса
-          const arrayIds = Array.from(new Set(chatIds));
           const fridayMessages = this.bot.createAlbums(
             records,
             this.bot.reddit.mapRedditForTelegram
           );
-          const promises = arrayIds.map((chatId) =>
+          const promises = chatIds.map((chatId) =>
             this.bot.sendFridayContent({ chatId, fridayMessages })
           );
           return Promise.all(promises);
