@@ -5,7 +5,7 @@ import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 
-import { useModerateStore } from "mobx/moderateFriday";
+import { useModerateStore } from "../../../mobx/moderateFriday";
 
 const useStyles = makeStyles((theme) => ({
   formControl: {

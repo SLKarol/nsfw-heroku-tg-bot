@@ -2,13 +2,13 @@ import { Component } from "react";
 import Container from "@material-ui/core/Container";
 import Backdrop from "@material-ui/core/Backdrop";
 
-import { ContentRSS, BashOrgUI } from "types/bashOrg";
-import { OnCheck } from "types/functions";
+import { ContentRSS, BashOrgUI } from "../../types/bashOrg";
+import { OnCheck } from "../../types/functions";
 
-import { getListBashOrg, sendToTelegram } from "lib/bashOrg";
+import { getListBashOrg, sendToTelegram } from "../../lib/bashOrg";
 
 import Header from "./Header";
-import Error from "components/Error";
+import Error from "../../components/Error";
 
 import List from "./List";
 

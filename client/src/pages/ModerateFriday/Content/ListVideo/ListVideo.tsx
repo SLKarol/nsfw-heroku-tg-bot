@@ -1,10 +1,10 @@
 import { observer } from "mobx-react-lite";
 import Grid from "@material-ui/core/Grid";
 
-import { useModerateStore } from "mobx/moderateFriday";
+import { useModerateStore } from "../../../../mobx/moderateFriday";
 
 import VideoContent from "./VideoContent/VideoContent";
-import CheckMaterial from "components/CheckMaterial/CheckMaterial";
+import CheckMaterial from "../../../../components/CheckMaterial/CheckMaterial";
 
 const ListVideo = () => {
   const { list } = useModerateStore();

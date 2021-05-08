@@ -2,7 +2,7 @@ import { FC } from "react";
 import Checkbox from "@material-ui/core/Checkbox";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 
-import { useModerateStore } from "mobx/moderateFriday";
+import { useModerateStore } from "../../mobx/moderateFriday";
 
 const CheckMaterial: FC<{ url?: string; title: string; checked: boolean }> = ({
   url = "",

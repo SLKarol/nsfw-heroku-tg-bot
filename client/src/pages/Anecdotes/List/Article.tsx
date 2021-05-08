@@ -1,7 +1,7 @@
 import { FC } from "react";
 import Checkbox from "@material-ui/core/Checkbox";
 
-import { OnCheck } from "types/functions";
+import { OnCheck } from "../../../types/functions";
 
 import styles from "./article.module.css";
 import ArticleTitle from "./ArticleTitle";

@@ -1,7 +1,7 @@
 import { FC } from "react";
 
-import { BashOrgUI } from "types/bashOrg";
-import { OnCheck } from "types/functions";
+import { BashOrgUI } from "../../../types/bashOrg";
+import { OnCheck } from "../../../types/functions";
 
 import styles from "./index.module.css";
 import Article from "./Article";

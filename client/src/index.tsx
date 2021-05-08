@@ -4,10 +4,10 @@ import { BrowserRouter, Switch, Route } from "react-router-dom";
 import "@fontsource/roboto";
 
 import App from "./App";
-import SignIn from "pages/SignIn/";
-import Anecdotes from "pages/Anecdotes/";
-import ForceMail from "pages/ForceMail/";
-import ModerateFriday from "pages/ModerateFriday/ModerateFriday";
+import SignIn from "./pages/SignIn/";
+import Anecdotes from "./pages/Anecdotes/";
+import ForceMail from "./pages/ForceMail/";
+import ModerateFriday from "./pages/ModerateFriday/ModerateFriday";
 
 import reportWebVitals from "./reportWebVitals";
 

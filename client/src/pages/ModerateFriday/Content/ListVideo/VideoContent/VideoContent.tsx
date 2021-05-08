@@ -2,7 +2,7 @@
 import { PureComponent, createRef, RefObject } from "react";
 import { withStyles, Theme, WithStyles } from "@material-ui/core/styles";
 
-import { downloadMedia } from "lib/media";
+import { downloadMedia } from "../../../../../lib/media";
 
 import Controls from "./Controls";
 

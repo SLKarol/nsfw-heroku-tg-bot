@@ -1,11 +1,11 @@
 import { createContext, useContext } from "react";
 import { makeAutoObservable, runInAction } from "mobx";
 
-import { NSFWChannel } from "types/nsfw";
+import { NSFWChannel } from "../types/nsfw";
 
-import { getListChannels } from "lib/nsfw";
-import { EmptyFunction } from "types/functions";
-import { StateResponse } from "types/common";
+import { getListChannels } from "../lib/nsfw";
+import { EmptyFunction } from "../types/functions";
+import { StateResponse } from "../types/common";
 
 export class ChannelsStore {
   // rootStore?: TRootStore;

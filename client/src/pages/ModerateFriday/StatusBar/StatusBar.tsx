@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
-import Alert from "components/Alert/Alert";
+import Alert from "../../../components/Alert/Alert";
 
-import { useModerateStore } from "mobx/moderateFriday";
+import { useModerateStore } from "../../../mobx/moderateFriday";
 
 const StatusBar = () => {
   const { state, error, appPending } = useModerateStore();

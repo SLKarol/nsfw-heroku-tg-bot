@@ -2,7 +2,7 @@ import { Redirect } from "react-router-dom";
 import Container from "@material-ui/core/Container";
 import Typography from "@material-ui/core/Typography";
 
-import HeaderPage from "components/HeaderPage";
+import HeaderPage from "../../components/HeaderPage";
 import Mailing from "./Mailing";
 
 const ForceMail = () => {

@@ -3,12 +3,12 @@ import Backdrop from "@material-ui/core/Backdrop";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 
-import { ClickHandler } from "types/functions";
-import { TypeNSFW } from "types/nsfw";
+import { ClickHandler } from "../../types/functions";
+import { TypeNSFW } from "../../types/nsfw";
 
-import { sendNSFW } from "lib/nsfw";
+import { sendNSFW } from "../../lib/nsfw";
 
-import Error from "components/Error";
+import Error from "../../components/Error";
 
 const Mailing: FC = () => {
   const [busy, setBusy] = useState(false);

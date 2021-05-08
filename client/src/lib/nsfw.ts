@@ -1,4 +1,4 @@
-import { NSFWChannel, IRedditApiRerod, TypeNSFW } from "types/nsfw";
+import { NSFWChannel, IRedditApiRerod, TypeNSFW } from "../types/nsfw";
 
 /**
  * Отправка nsfw

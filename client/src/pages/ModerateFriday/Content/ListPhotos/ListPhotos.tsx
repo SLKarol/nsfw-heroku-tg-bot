@@ -1,9 +1,9 @@
 import { observer } from "mobx-react-lite";
 
-import { useModerateStore } from "mobx/moderateFriday";
+import { useModerateStore } from "../../../../mobx/moderateFriday";
 
 import Photo from "./Photo";
-import CheckMaterial from "components/CheckMaterial/CheckMaterial";
+import CheckMaterial from "../../../../components/CheckMaterial/CheckMaterial";
 
 const ListPhotos = () => {
   const { list } = useModerateStore();

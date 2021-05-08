@@ -8,9 +8,9 @@ import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Backdrop from "@material-ui/core/Backdrop";
 
-import { ClickHandler, OnChange } from "types/functions";
+import { ClickHandler, OnChange } from "../../types/functions";
 
-import { currentUserHasLogin } from "lib/user";
+import { currentUserHasLogin } from "../../lib/user";
 
 const useStyles = makeStyles((theme) => ({
   paper: {

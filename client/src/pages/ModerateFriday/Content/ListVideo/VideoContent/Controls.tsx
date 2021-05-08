@@ -5,7 +5,7 @@ import StopIcon from "@material-ui/icons/Stop";
 import CloudDownloadIcon from "@material-ui/icons/CloudDownload";
 import { makeStyles } from "@material-ui/core/styles";
 
-import { ClickHandler } from "types/functions";
+import { ClickHandler } from "../../../../../types/functions";
 
 const useStyles = makeStyles((theme) => ({
   button: {

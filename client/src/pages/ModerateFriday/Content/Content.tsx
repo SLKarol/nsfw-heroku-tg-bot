@@ -1,9 +1,9 @@
 import { observer } from "mobx-react-lite";
 import Grid from "@material-ui/core/Grid";
 
-import { useModerateStore } from "mobx/moderateFriday";
+import { useModerateStore } from "../../../mobx/moderateFriday";
 
-import GridContainer from "components/GridContainer/GridContainer";
+import GridContainer from "../../../components/GridContainer/GridContainer";
 import ListPhotos from "./ListPhotos/ListPhotos";
 import ListVideo from "./ListVideo/ListVideo";
 

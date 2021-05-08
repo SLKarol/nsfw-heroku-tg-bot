@@ -1,12 +1,12 @@
 import { createContext, useContext } from "react";
 import { makeAutoObservable, runInAction } from "mobx";
 
-import { IRedditApiRerod, ResponseListRecords, TypeNSFW } from "types/nsfw";
-import { onChangeCheck, onChangeSelectValue } from "types/functions";
-import { StateResponse } from "types/common";
+import { IRedditApiRerod, ResponseListRecords, TypeNSFW } from "../types/nsfw";
+import { onChangeCheck, onChangeSelectValue } from "../types/functions";
+import { StateResponse } from "../types/common";
 
-import { ChannelsStore } from "mobx/channels";
-import { downloadMedia } from "lib/media";
+import { ChannelsStore } from "../mobx/channels";
+import { downloadMedia } from "../lib/media";
 
 //! Исправить на динамичный выбор
 type WritableStringKeys = "typeMailing" | "selectedChannel";
