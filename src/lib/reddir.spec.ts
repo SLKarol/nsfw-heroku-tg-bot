@@ -5,7 +5,7 @@ import {
   gifvRecord,
   pictureRecord,
   mp4Record,
-} from "../../test/mocData/redditRecords";
+} from "../test/mocData/redditRecords";
 
 const reddit = new Reddit();
 
