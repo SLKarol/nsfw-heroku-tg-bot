@@ -3,9 +3,11 @@ import delay from "@stanislavkarol/delay";
 import asyncHandler from "express-async-handler";
 import express from "express";
 
-import type NSFWBot from "../bots/NSFWBot";
+import BASE_URL from "../const/baseUrl";
 import { IRedditApiRerod } from "../types/reddit";
 import { RecordBor } from "../types/bor";
+
+import type NSFWBot from "../bots/NSFWBot";
 import {
   RequestContent,
   GetNSFWParams,
@@ -66,7 +68,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
         this.bot.reddit.mapRedditForTelegram
       );
       // Получить ссылку на метод, который отправляет альбомы
-      const url = `${req.protocol}://${req.headers.host}/api/botFriday/postFridayTelegram`;
+      const url = `${BASE_URL}/api/botFriday/postFridayTelegram`;
       // Отправить сформированные альбомы в телеграм
       for (const id of chatIds) {
         fetch(url, {
@@ -77,7 +79,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
           body: JSON.stringify({ chatId: id, fridayMessages }),
         });
       }
-      res.status(200).send("OK");
+      res.status(200).json({ url });
     }
   );
 

@@ -64,7 +64,7 @@ class ManageSubscribe {
     const tasks = await Subscribe.find({
       typeSubscribe: this.nameSubscribe,
     }).distinct("chatId");
-    return tasks.map((t) => t.chatId as string);
+    return tasks;
   }
 }
 
