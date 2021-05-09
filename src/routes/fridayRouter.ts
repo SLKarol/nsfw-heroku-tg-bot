@@ -79,7 +79,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
           body: JSON.stringify({ chatId: id, fridayMessages }),
         });
       }
-      res.status(200).json({ url });
+      res.status(200).json({ status: "ok" });
     }
   );
 

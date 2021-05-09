@@ -218,7 +218,7 @@ export class ModerateFridayStore {
     this.state = "error";
     // Найти ответ
     const { status, error } = json;
-    if (status === "ok") {
+    if (status.toLowerCase() === "ok") {
       this.state = "success";
       this.error = null;
       return;
