@@ -161,12 +161,10 @@ export class ModerateFridayStore {
    */
   __sendSelectedPhoto = (records: IRedditApiRerod[], name: string) => {
     this.state = "pending";
-    const token = localStorage.getItem("token");
 
     fetch("/api/botFriday/sendFriday", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ records, name }),
@@ -203,6 +201,7 @@ export class ModerateFridayStore {
     this.selectedRecords.some((r) => r === record.url);
 
   fetchModerateSuccess = (response: Response) => {
+    this.state = "success";
     response.json().then(this.analyzeResponse);
   };
 

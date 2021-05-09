@@ -1,6 +1,6 @@
+import fetch from "node-fetch";
 import delay from "@stanislavkarol/delay";
 import asyncHandler from "express-async-handler";
-// import { Request, Response } from "express";
 import express from "express";
 
 import type NSFWBot from "../bots/NSFWBot";
@@ -35,6 +35,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     this.router.post("/sendBOR", this.sendBOR);
     this.router.post("/listChannels", this.getListChannels);
     this.router.post("/getContent", this.getContent);
+    this.router.post("/postFridayTelegram", this.postFridayTelegram);
   }
 
   /**
@@ -44,11 +45,6 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
    */
   sendFriday = asyncHandler(
     async (req: express.Request, res: express.Response) => {
-      if (!req.isAuth) {
-        return res
-          .status(401)
-          .json({ message: "Ошибка авторизации", success: false });
-      }
       const { records = [], name } = req.body;
       // Получить Название канала
       const infoChannel = await this.bot.getChannelInfo({
@@ -57,22 +53,31 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
       });
       // Получить ID Чатов для рассылки
       const prChatIds = this.getChatForMailing();
-      const prFridayMessages = !records.length
+      // Получить список изображений
+      const prFridayImages = !records.length
         ? this.bot.reddit.getNewRecords({ limit: 20, name: infoChannel.name })
         : new Promise<IRedditApiRerod[]>((resolve) => resolve(records));
-      return Promise.all([prChatIds, prFridayMessages])
-        .then(([chatIds, records]) => {
-          const fridayMessages = this.bot.createAlbums(
-            records,
-            this.bot.reddit.mapRedditForTelegram
-          );
-          const promises = chatIds.map((chatId) =>
-            this.bot.sendFridayContent({ chatId, fridayMessages })
-          );
-          return Promise.all(promises);
-        })
-        .then((resultWork) => this.analyzeModerateWork(resultWork, res))
-        .catch((e) => res.status(400).json({ error: e }));
+      const [chatIds, fridayImages] = await Promise.all([
+        prChatIds,
+        prFridayImages,
+      ]);
+      const fridayMessages = this.bot.createAlbums(
+        fridayImages,
+        this.bot.reddit.mapRedditForTelegram
+      );
+      // Получить ссылку на метод, который отправляет альбомы
+      const url = `${req.protocol}://${req.headers.host}/api/botFriday/postFridayTelegram`;
+      // Отправить сформированные альбомы в телеграм
+      for (const id of chatIds) {
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ chatId: id, fridayMessages }),
+        });
+      }
+      res.status(200).send("OK");
     }
   );
 
@@ -293,6 +298,17 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
       return res.status(400).json(error);
     }
     return res.status(200).json({ status: "ok" });
+  };
+
+  /**
+   * Отправка пятничного содержимого в телеграмм-канал
+   */
+  postFridayTelegram = (req: express.Request, res: express.Response) => {
+    const { fridayMessages, chatId } = req.body;
+    this.bot
+      .sendFridayContent({ chatId, fridayMessages })
+      .then(() => res.status(200).json({ status: "ok" }))
+      .catch((error) => res.status(500).json({ error }));
   };
 }
 
