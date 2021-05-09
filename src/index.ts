@@ -9,7 +9,7 @@ import cors from "cors";
 import asyncHandler from "express-async-handler";
 import * as dotenv from "dotenv";
 
-import TOKEN from "./const/token.js";
+import TOKEN from "./const/token";
 import Reddit from "./lib/reddit";
 import NSFWBot from "./bots/NSFWBot";
 import FridayRouter from "./routes/fridayRouter";
