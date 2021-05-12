@@ -42,6 +42,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     this.router.post("/getContent", this.getContent);
     this.router.post("/postFridayTelegram", this.postFridayTelegram);
     this.router.get("/channels", this.getListChannels);
+    this.router.post("/channels", validateChannelFormData, this.addChannel);
     this.router.put(
       "/channels/:channelId",
       validateChannelFormData,
