@@ -34,13 +34,6 @@ app.use(express.urlencoded({ extended: true, limit: "350mb" })); // for parsing 
 // Звено для авторизации
 app.use(authMiddleware);
 
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static("client/build"));
-  app.get("/*", function (req, res) {
-    res.sendFile(path.join(__dirname, "../client/build/index.html"));
-  });
-}
-
 const fridayRouer = new FridayRouter(nsfwBot, "/api/botFriday");
 app.use("/api/botFriday", fridayRouer.router);
 app.use("/api/auth", authRoutes);
@@ -56,6 +49,13 @@ app.post(
     return res.status(200).json({ isFriday: checkDay });
   })
 );
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static("client/build"));
+  app.get("/*", function (req, res) {
+    res.sendFile(path.join(__dirname, "../client/build/index.html"));
+  });
+}
 
 // Error handling
 app.use(function (
