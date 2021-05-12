@@ -58,8 +58,8 @@ export function sendFriday(records: IRedditApiRerod[]) {
 
 export async function getListChannels() {
   const token = localStorage.getItem("token");
-  const response = await fetch("/api/botFriday/listChannels", {
-    method: "POST",
+  const response = await fetch("/api/botFriday/channels", {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",

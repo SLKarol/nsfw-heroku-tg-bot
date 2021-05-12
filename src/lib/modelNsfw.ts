@@ -1,4 +1,7 @@
+import { ObjectId } from "mongodb";
+
 import { IChannel } from "../schema/channel";
+import { TChannel } from "../types/channel";
 
 import { getDbConnection } from "./mongoDb";
 
@@ -18,7 +21,7 @@ class ModelNsfw {
     const channels = db
       .collection<IChannel>("nsfwChannels")
       .find(filter)
-      .sort({ withVideo: 1, name: 1 });
+      .sort({ name: 1, withVideo: 1 });
     const re = await channels.toArray();
     return re;
   }
@@ -41,16 +44,59 @@ class ModelNsfw {
   }
 
   /**
-   * Получить случайный канал
-   * @returns {Promise<Object>}
+   * Получить случайный не модерируемый канал
+   * @returns {Promise<IChannel>}
    */
   async getRandomChannel() {
     const db = await getDbConnection();
     const channels = await db
-      .collection("nsfwChannels")
-      .aggregate([{ $sample: { size: 1 } }])
+      .collection<IChannel>("nsfwChannels")
+      .aggregate([
+        { $match: { moderationRequired: true } },
+        { $sample: { size: 1 } },
+      ])
       .toArray();
     return channels[0];
+  }
+
+  /**
+   * Добавить новый канал
+   * @param channelName Название канала
+   */
+  async addNewChannel(
+    channelName: string,
+    withVideo: boolean = false,
+    moderationRequired: boolean = false
+  ) {
+    const db = await getDbConnection();
+    return db
+      .collection<TChannel>("nsfwChannels")
+      .insertOne({ name: channelName, withVideo, moderationRequired });
+  }
+
+  /**
+   * Обновить запись о канале
+   */
+  updateChannel(
+    id: string,
+    name: string,
+    withVideo: boolean = false,
+    moderationRequired: boolean = false
+  ) {
+    return getDbConnection().then((db) =>
+      db.collection<TChannel>("nsfwChannels").updateOne(
+        { _id: new ObjectId(id) }, // Фильтр
+        { $set: { name, withVideo, moderationRequired } } // Обновить
+      )
+    );
+  }
+
+  deleteChannel(id: string) {
+    return getDbConnection().then((db) =>
+      db
+        .collection<TChannel>("nsfwChannels")
+        .deleteOne({ _id: new ObjectId(id) })
+    );
   }
 }
 

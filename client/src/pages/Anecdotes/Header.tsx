@@ -11,13 +11,8 @@ type Props = {
 };
 
 const Header: FC<Props> = ({ onClick, disabled }) => (
-  <HeaderPage title="Список анекдотов">
-    <Button
-      variant="outlined"
-      size="small"
-      disabled={disabled}
-      onClick={onClick}
-    >
+  <HeaderPage title="Рассылка выпусков БОР">
+    <Button color="inherit" disabled={disabled} onClick={onClick}>
       Сделать рассылку
     </Button>
   </HeaderPage>

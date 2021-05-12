@@ -39,3 +39,5 @@ export type onChangeCheck = (
   }>,
   child?: React.ReactNode
 ) => void;
+
+export type EmptyHandler = () => void;

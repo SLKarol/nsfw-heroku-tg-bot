@@ -57,10 +57,6 @@ app.post(
   })
 );
 
-app.use("*", (req, res, next) => {
-  res.send("<h1>Welcome to your simple server! Awesome right</h1>");
-});
-
 // Error handling
 app.use(function (
   err: ErrorRequestHandler,

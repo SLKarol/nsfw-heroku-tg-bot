@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import delay from "@stanislavkarol/delay";
 import asyncHandler from "express-async-handler";
 import express from "express";
+import { body, validationResult } from "express-validator";
 
 import BASE_URL from "../const/baseUrl";
 import { IRedditApiRerod } from "../types/reddit";
@@ -32,12 +33,21 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
    */
   constructor(bot: NSFWBot, baseUrl: string) {
     super(bot, baseUrl);
+    const validateChannelFormData = [
+      body("name").not().isEmpty().withMessage("Name is required"),
+    ];
     this.router.post("/sendFriday", this.sendFriday);
     this.router.post("/sendFridayVideo", this.sendFridayVideo);
     this.router.post("/sendBOR", this.sendBOR);
-    this.router.post("/listChannels", this.getListChannels);
     this.router.post("/getContent", this.getContent);
     this.router.post("/postFridayTelegram", this.postFridayTelegram);
+    this.router.get("/channels", this.getListChannels);
+    this.router.put(
+      "/channels/:channelId",
+      validateChannelFormData,
+      this.editChannel
+    );
+    this.router.delete("/channels/:channelId", this.deleteChannel);
   }
 
   /**
@@ -310,6 +320,81 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     this.bot
       .sendFridayContent({ chatId, fridayMessages })
       .then(() => res.status(200).json({ status: "ok" }))
+      .catch((error) => res.status(500).json({ error }));
+  };
+
+  /**
+   * Добавить канал
+   */
+  addChannel = (req: express.Request, res: express.Response) => {
+    if (!req.isAuth) {
+      return res
+        .status(401)
+        .json({ message: "Ошибка авторизации", success: false });
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      if (!errors.isEmpty()) {
+        return res.status(422).json({
+          status: false,
+          validationErrors: errors.array(),
+        });
+      }
+    }
+    const { name, withVideo, moderationRequired } = req.body;
+    this.bot.db
+      .addNewChannel(name, withVideo, moderationRequired)
+      .then((result) => {
+        return res.status(200).json({ id: result.insertedId });
+      })
+      .catch((error) => res.status(500).json({ error }));
+  };
+
+  /**
+   * Редактировать канал
+   */
+  editChannel = (req: express.Request, res: express.Response) => {
+    if (!req.isAuth) {
+      return res
+        .status(401)
+        .json({ message: "Ошибка авторизации", success: false });
+    }
+
+    const channelId = req.params.channelId;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      if (!errors.isEmpty()) {
+        return res.status(422).json({
+          status: false,
+          validationErrors: errors.array(),
+        });
+      }
+    }
+    const { name, withVideo, moderationRequired } = req.body;
+    this.bot.db
+      .updateChannel(channelId, name, withVideo, moderationRequired)
+      .then(() => {
+        return res.status(200).json({ status: "ok" });
+      })
+      .catch((error) => res.status(500).json({ error }));
+  };
+
+  /**
+   * Удалить реддит-канал из БД
+   */
+  deleteChannel = (req: express.Request, res: express.Response) => {
+    if (!req.isAuth) {
+      return res
+        .status(401)
+        .json({ message: "Ошибка авторизации", success: false });
+    }
+
+    const channelId = req.params.channelId;
+    this.bot.db
+      .deleteChannel(channelId)
+      .then((r) => {
+        return res.status(200).json({ status: "ok", result: r.result });
+      })
       .catch((error) => res.status(500).json({ error }));
   };
 }

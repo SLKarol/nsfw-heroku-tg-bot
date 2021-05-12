@@ -1,11 +1,8 @@
+import { TChannel } from "../../../src/types/channel";
+
 export type TypeNSFW = "video" | "photo";
 
-export interface IChannel {
-  name: string;
-  withVideo: boolean;
-}
-
-export interface NSFWChannel extends IChannel {
+export interface NSFWChannel extends TChannel {
   _id: string;
 }
 
