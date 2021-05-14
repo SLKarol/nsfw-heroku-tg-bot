@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { makeAutoObservable, runInAction, flow } from "mobx";
+import { makeAutoObservable, flowResult } from "mobx";
 
 import { NSFWChannel } from "../types/nsfw";
 
@@ -29,27 +29,31 @@ export class ChannelsStore {
     this.error = "";
     this.handleSaveChannel = this.handleSaveChannel.bind(this);
     this.handleDeleteChannel = this.handleDeleteChannel.bind(this);
-    makeAutoObservable(this, {
-      handleSaveChannel: flow,
-      handleDeleteChannel: flow,
-    });
+    this.loadList = this.loadList.bind(this);
+    // makeAutoObservable(this, {
+    //   handleSaveChannel: flow,
+    //   handleDeleteChannel: flow,
+    //   loadList: flow,
+    // });
+    makeAutoObservable(this, {}, { autoBind: true });
   }
 
   /**
    * Загрузка списка каналов
    */
-  loadList = async () => {
+  *loadList() {
     this.state = "pending";
-    const channels = await getListChannels();
-    runInAction(() => {
-      this.state = "done";
-      this.list = channels;
-      if (this.onLoadChannels) {
-        this.onLoadChannels();
-      }
-    });
-  };
+    const channels: NSFWChannel[] = yield getListChannels();
+    this.state = "done";
+    this.list = channels;
+    if (this.onLoadChannels) {
+      this.onLoadChannels();
+    }
+  }
 
+  /**
+   * Задать вид операции
+   */
   setOperation = (operation: TypesOperation) => {
     this.operation = operation;
   };
@@ -76,7 +80,7 @@ export class ChannelsStore {
     const buttonName = (event.currentTarget as HTMLButtonElement)
       .name as TypesOperation;
     if (buttonName === "refresh") {
-      return this.loadList();
+      return flowResult(this.loadList());
     }
     if (buttonName === "add") {
       this.selectedChannel = "";
@@ -204,6 +208,9 @@ export class ChannelsStore {
     return this.state === "pending";
   }
 
+  /**
+   * Записать описание ошибки в this.error
+   */
   analyzeError(data: ResponseError) {
     this.state = "error";
     this.error = data.validationErrors[0].msg;

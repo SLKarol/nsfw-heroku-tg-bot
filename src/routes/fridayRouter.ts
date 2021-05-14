@@ -39,7 +39,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     this.router.post("/sendFriday", this.sendFriday);
     this.router.post("/sendFridayVideo", this.sendFridayVideo);
     this.router.post("/sendBOR", this.sendBOR);
-    this.router.post("/getContent", this.getContent);
+    this.router.get("/content", this.getContent);
     this.router.post("/postFridayTelegram", this.postFridayTelegram);
     this.router.get("/channels", this.getListChannels);
     this.router.post("/channels", validateChannelFormData, this.addChannel);
@@ -266,10 +266,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
    * @param {Request} req
    * @param {Response} res
    */
-  getContent = (
-    req: express.Request<unknown, unknown, unknown, RequestContent>,
-    res: express.Response
-  ) => {
+  getContent = asyncHandler(async (req, res) => {
     const {
       type = "photo",
       channel = "nsfw",
@@ -277,16 +274,26 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
       limit = 50,
     } = req.query;
     if (type === "photo") {
-      return this.getNSFW({ name: channel, limit }, res);
+      return await this.getNSFW(
+        { name: channel.toString(), limit: Number(limit) },
+        res
+      );
     }
     if (type === "video") {
-      return this.getVideoNSFW({ name: channel, filterContent, limit }, res);
+      return await this.getVideoNSFW(
+        {
+          name: channel.toString(),
+          limit: Number(limit),
+          filterContent: filterContent as boolean,
+        },
+        res
+      );
     }
     res.status(422).json({
       status: false,
       validationErrors: [{ type: "Неизвестный тип содержимого" }],
     });
-  };
+  });
 
   /**
    * Анализ и выдача результатов работы промисов

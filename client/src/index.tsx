@@ -7,7 +7,7 @@ import App from "./App";
 import SignIn from "./pages/SignIn/";
 import Anecdotes from "./pages/Anecdotes/";
 import ForceMail from "./pages/ForceMail/";
-import ModerateFriday from "./pages/ModerateFriday/ModerateFriday";
+import ModerateFriday from "./pages/ModerateFriday/";
 import Channels from "./pages/Channels/";
 
 import reportWebVitals from "./reportWebVitals";

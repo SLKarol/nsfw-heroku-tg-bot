@@ -1,15 +1,27 @@
 import { createContext, useContext } from "react";
-import { makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable } from "mobx";
 
-import { IRedditApiRerod, ResponseListRecords, TypeNSFW } from "../types/nsfw";
+import { IRedditApiRerod } from "../../../src/types/reddit";
+import {
+  ClientRedditApiRerod,
+  ResponseListRecords,
+  TypeNSFW,
+} from "../types/nsfw";
 import { onChangeCheck, onChangeSelectValue } from "../types/functions";
 import { StateResponse } from "../types/common";
 
 import { ChannelsStore } from "../mobx/channels";
 import { downloadMedia } from "../lib/media";
+import correctDimension from "../lib/correctDimension";
 
 //! Исправить на динамичный выбор
 type WritableStringKeys = "typeMailing" | "selectedChannel";
+type ResponseResult = { status: string; error: { message: string } };
+interface RecordAsReddit {
+  is_video: boolean;
+  title: string;
+  url: string | number[];
+}
 
 export class ModerateFridayStore {
   /**
@@ -21,16 +33,18 @@ export class ModerateFridayStore {
   /** Выбранный канал */
   selectedChannel = "";
   /** Записи для модерации */
-  recordsToModerate: IRedditApiRerod[] = [];
+  recordsToModerate: ClientRedditApiRerod[] = [];
   /** Статус доступности */
   state: StateResponse = "done";
   /** IDs то есть- urls выбранных записей */
   selectedRecords: string[] = [];
   /** Ошибка работы с api*/
   error: string | null = null;
+  /** Изображения только корректного формата*/
+  onlyCorrectDimensions: boolean = false;
 
   constructor() {
-    makeAutoObservable(this);
+    makeAutoObservable(this, {}, { autoBind: true });
     this.channelsStore = new ChannelsStore(this.onLoadChannels);
   }
 
@@ -54,6 +68,7 @@ export class ModerateFridayStore {
     this[name as WritableStringKeys] = value as any;
     this.recordsToModerate = [];
     this.selectedRecords = [];
+    this.onlyCorrectDimensions = false;
     this.error = null;
     this.state = "done";
   };
@@ -61,39 +76,53 @@ export class ModerateFridayStore {
   /**
    * Загрузка модерируемого содержимого
    */
-  loadRecords = async () => {
+  *loadRecords() {
     this.recordsToModerate = [];
-    this.state = "pending";
+    this.onlyCorrectDimensions = false;
     this.selectedRecords = [];
+    this.state = "pending";
     const token = localStorage.getItem("token");
     const channel = this.selectedChannelName;
-
     const params = new URLSearchParams({
       type: this.typeMailing,
       channel,
     });
-
-    const response = await fetch(`/api/botFriday/getContent?${params}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    const result = (await response.json()) as ResponseListRecords;
-    const { records } = result;
-    runInAction(() => {
+    try {
+      const response: Response = yield fetch(
+        `/api/botFriday/content?${params}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const result: ResponseListRecords = yield response.json();
+      const { records } = result;
       this.state = "done";
-      this.recordsToModerate = records;
-    });
-  };
+      this.recordsToModerate =
+        this.typeMailing === "photo"
+          ? yield this.checkCorrectImages(records)
+          : yield records;
+      return true;
+    } catch (err) {
+      //! Описать ошибку
+      return console.error(err);
+    }
+  }
 
   /**
    * Список материалов для модерации с отметкой на выбранных фото/видео
    */
   get list() {
-    const { selectedRecords } = this;
-    return this.recordsToModerate.map((record) => ({
+    const { selectedRecords, recordsToModerate, onlyCorrectDimensions } = this;
+    const records = onlyCorrectDimensions
+      ? recordsToModerate.filter((r) => r.correctImageDimension)
+      : recordsToModerate;
+    console.log(recordsToModerate.length, records.length);
+
+    return records.map((record) => ({
       ...record,
       checked: selectedRecords.some((urlChecked) => urlChecked === record.url),
     }));
@@ -149,61 +178,68 @@ export class ModerateFridayStore {
     const records = this.recordsToModerate.filter(this.__filterSelectedRecords);
     const channelName = this.selectedChannelName;
     if (this.countSelected && this.typeMailing === "photo") {
-      return this.__sendSelectedPhoto(records, channelName);
+      return this.sendSelectedPhoto(records, channelName);
     }
     if (this.countSelected && this.typeMailing === "video") {
-      return this.__sendSelectedVideo(records, channelName);
+      return this.sendSelectedVideo(records, channelName);
     }
   };
 
   /**
    * Отправка выбранных фото в телеграмм
    */
-  __sendSelectedPhoto = (records: IRedditApiRerod[], name: string) => {
+  private *sendSelectedPhoto(records: ClientRedditApiRerod[], name: string) {
     this.state = "pending";
-
-    fetch("/api/botFriday/sendFriday", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ records, name }),
-    }).then(this.fetchModerateSuccess, this.fetchModerateFailure);
-  };
+    try {
+      const response: Response = yield fetch("/api/botFriday/sendFriday", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ records, name }),
+      });
+      this.state = "success";
+      const data: ResponseResult = yield response.json();
+      this.analyzeResponse(data);
+    } catch (err) {
+      this.fetchModerateFailure(err);
+    }
+  }
 
   /**
    * Отправка выбранных видео в телеграмм
    */
-  __sendSelectedVideo = async (records: IRedditApiRerod[], name: string) => {
+  private *sendSelectedVideo(records: ClientRedditApiRerod[], name: string) {
     this.state = "pending";
     const token = localStorage.getItem("token");
     // Собрать видеозаписи
-    //! исправить на allSettled
-    const recordsToPublish = await Promise.all(
+    const recordsToPublish: RecordAsReddit[] = yield Promise.all(
       records.map(this.__mapVideoForTelegram)
     );
-    fetch("/api/botFriday/sendFridayVideo", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ records: recordsToPublish, name }),
-    }).then(this.fetchModerateSuccess, this.fetchModerateFailure);
-  };
+    try {
+      const response: Response = yield fetch("/api/botFriday/sendFridayVideo", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ records: recordsToPublish, name }),
+      });
+      this.state = "success";
+      const data: ResponseResult = yield response.json();
+      this.analyzeResponse(data);
+    } catch (err) {
+      this.fetchModerateFailure(err);
+    }
+  }
 
   /**
    * Фильтрация записей для модерации
    * @param {Object} record запись из recordsToModerate
    * @returns {boolean}
    */
-  __filterSelectedRecords = (record: IRedditApiRerod) =>
+  __filterSelectedRecords = (record: ClientRedditApiRerod) =>
     this.selectedRecords.some((r) => r === record.url);
-
-  fetchModerateSuccess = (response: Response) => {
-    this.state = "success";
-    response.json().then(this.analyzeResponse);
-  };
 
   fetchModerateFailure = (error: unknown) => {
     this.state = "done";
@@ -214,7 +250,7 @@ export class ModerateFridayStore {
    * Анализ ответа api
    * @param {Object} json
    */
-  analyzeResponse = (json: { status: string; error: { message: string } }) => {
+  analyzeResponse = (json: ResponseResult) => {
     this.state = "error";
     // Найти ответ
     const { status, error } = json;
@@ -235,25 +271,48 @@ export class ModerateFridayStore {
    * @param {Object} record
    * @returns
    */
-  __mapVideoForTelegram = async (record: IRedditApiRerod) => {
+  __mapVideoForTelegram = (record: ClientRedditApiRerod) => {
     const { title, url = "", urlAudio = "" } = record;
-    const baseInfo: {
-      is_video: boolean;
-      title: string;
-      url: string | number[];
-    } = {
+    const baseInfo: RecordAsReddit = {
       is_video: true,
       title,
       url,
     };
-    const mediaData = await downloadMedia(url, urlAudio);
-    if (mediaData === null) {
+    return downloadMedia(url, urlAudio).then((mediaData) => {
+      if (mediaData === null) {
+        return baseInfo;
+      }
+      baseInfo.url =
+        typeof mediaData === "string" ? url : Array.from(mediaData);
       return baseInfo;
-    }
-
-    baseInfo.url = typeof mediaData === "string" ? url : Array.from(mediaData);
-    return baseInfo;
+    });
   };
+
+  /**
+   * Проверка на корректность изображения
+   */
+  private *checkCorrectImages(records: IRedditApiRerod[]) {
+    const re: ClientRedditApiRerod[] = [];
+    for (const redditRecord of records) {
+      const correctImageDimension: boolean = yield correctDimension(
+        redditRecord.url || ""
+      );
+      re.push({ ...redditRecord, correctImageDimension });
+    }
+    return re;
+  }
+
+  get disableToggleCorrectDimensions() {
+    return this.typeMailing === "video";
+  }
+  toggleShowCorrectImages() {
+    this.onlyCorrectDimensions = !this.onlyCorrectDimensions;
+    this.selectedRecords = [];
+  }
+
+  get countAll() {
+    return this.list.length;
+  }
 }
 
 export const createStore = () => {

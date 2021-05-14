@@ -43,7 +43,7 @@ export interface RedditApiMedia {
 /**
  * Блок images в ответе reddit
  */
-type RedditApiImages = {
+export type RedditApiImages = {
   source: {
     url: string;
     width: number;

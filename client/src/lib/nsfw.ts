@@ -1,4 +1,4 @@
-import { NSFWChannel, IRedditApiRerod, TypeNSFW } from "../types/nsfw";
+import { NSFWChannel, ClientRedditApiRerod, TypeNSFW } from "../types/nsfw";
 
 /**
  * Отправка nsfw
@@ -46,7 +46,7 @@ export function getNSFW(limit = 20) {
  * @param {Array} records
  * @returns {Promise}
  */
-export function sendFriday(records: IRedditApiRerod[]) {
+export function sendFriday(records: ClientRedditApiRerod[]) {
   return fetch("/api/botFriday/sendFriday", {
     method: "POST",
     headers: {
