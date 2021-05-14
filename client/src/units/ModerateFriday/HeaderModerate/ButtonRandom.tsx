@@ -6,13 +6,13 @@ import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
 import { useModerateStore } from "../../../mobx/moderateFriday";
 
 const ButtonRandom = () => {
-  const { loadRecords, appPending } = useModerateStore();
+  const { loadFromRandomChannel, appPending } = useModerateStore();
 
   return (
     <Tooltip title="Запрашивает случайный канал">
       <Button
         variant="contained"
-        onClick={loadRecords}
+        onClick={loadFromRandomChannel}
         disabled={appPending}
         color="default"
         startIcon={<HelpOutlineIcon />}

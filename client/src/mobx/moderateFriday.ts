@@ -322,6 +322,14 @@ export class ModerateFridayStore {
   get countAll() {
     return this.list.length;
   }
+
+  *loadFromRandomChannel() {
+    // Получить случайный канал
+    const { list } = this.channelsStore;
+    const channel = list[(list.length * Math.random()) | 0];
+    this.selectedChannel = channel._id;
+    yield this.loadRecords();
+  }
 }
 
 export const createStore = () => {
