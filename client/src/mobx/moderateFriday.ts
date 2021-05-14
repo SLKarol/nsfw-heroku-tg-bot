@@ -302,14 +302,23 @@ export class ModerateFridayStore {
     return re;
   }
 
+  /**
+   * Сделать выбор корректного изображения недоступным для видео
+   */
   get disableToggleCorrectDimensions() {
     return this.typeMailing === "video";
   }
+  /**
+   * Переключить состояние "Корректные/Любые изображения"
+   */
   toggleShowCorrectImages() {
     this.onlyCorrectDimensions = !this.onlyCorrectDimensions;
     this.selectedRecords = [];
   }
 
+  /**
+   * Все изображения
+   */
   get countAll() {
     return this.list.length;
   }
