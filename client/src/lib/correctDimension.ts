@@ -9,11 +9,11 @@ async function isCorrectImage(url: string) {
   if (!url.match(/.(jpg|jpeg|png|gif)$/i)) return false;
   let re = false;
   try {
-    const { width, height } = await imageInfo(url);
+    const { width, height, size } = await imageInfo(url);
     const sum = width + height;
     // todo
     // Добавить в условие проверку отношения: isCorrectRatio(width, height)
-    if (sum < 10000) {
+    if (sum < 10000 && size < 10485760) {
       re = isCorrectRatio(width, height);
     }
   } catch (error) {

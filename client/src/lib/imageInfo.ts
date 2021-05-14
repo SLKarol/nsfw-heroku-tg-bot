@@ -30,4 +30,21 @@ const imageInfo = (
     }
   });
 
-export default imageInfo;
+function getFilesize(url: string): Promise<number> {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.onreadystatechange = () => {
+      const length = xhr.getResponseHeader("Content-Length");
+      resolve(length === null ? -1 : +length);
+      xhr.abort();
+    };
+    xhr.send();
+  });
+}
+
+export default async function requestImageInfo(url: string) {
+  const size = await getFilesize(url);
+  const image = await imageInfo(url);
+  return { size, height: image.height, width: image.width };
+}

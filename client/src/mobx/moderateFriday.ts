@@ -100,11 +100,11 @@ export class ModerateFridayStore {
       );
       const result: ResponseListRecords = yield response.json();
       const { records } = result;
-      this.state = "done";
       this.recordsToModerate =
         this.typeMailing === "photo"
           ? yield this.checkCorrectImages(records)
           : yield records;
+      this.state = "done";
       return true;
     } catch (err) {
       //! Описать ошибку
