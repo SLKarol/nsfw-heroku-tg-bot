@@ -1,23 +1,33 @@
 import probe from "probe-image-size";
 
+import { CorrectImageDimension } from "../types/reddit";
+
+import {
+  IMAGE_SIZE_LIMIT,
+  IMAGE_SUM_DIMENSION_LIMIT,
+} from "../const/telegramSettings";
+
 /**
  * Изображение годно к отправке в телеграмм?
  * @param {string} url Адрес изображения
  * @returns {boolean} Корректно для отправки
  */
-async function isCorrectImage(url: string) {
+async function isCorrectImage(
+  url: string
+): Promise<CorrectImageDimension | boolean> {
+  let re: CorrectImageDimension | boolean = {
+    [url]: false,
+  };
   if (!url.match(/.(jpg|jpeg|png|gif)$/i)) return false;
-  let re = false;
   try {
     const { width, height, length } = await probe(url);
     const sum = width + height;
-    // todo
-    // Добавить в условие проверку отношения: isCorrectRatio(width, height)
-    if (sum < 10000 && length < 5e6) {
-      re = true;
+    if (sum < IMAGE_SUM_DIMENSION_LIMIT && length < IMAGE_SIZE_LIMIT) {
+      re[url] = isCorrectRatio(width, height);
     }
   } catch (error) {
     console.error(error);
+    re = false;
   }
   return re;
 }

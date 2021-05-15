@@ -5,7 +5,7 @@ import express from "express";
 import { body, validationResult } from "express-validator";
 
 import BASE_URL from "../const/baseUrl";
-import { IRedditApiRerod } from "../types/reddit";
+import { IRedditApiRerod, RedditMediaTelegram } from "../types/reddit";
 import { RecordBor } from "../types/bor";
 
 import type NSFWBot from "../bots/NSFWBot";
@@ -69,13 +69,13 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
       // Получить список изображений
       const prFridayImages = !records.length
         ? this.bot.reddit.getNewRecords({ limit: 20, name: infoChannel.name })
-        : new Promise<IRedditApiRerod[]>((resolve) => resolve(records));
+        : new Promise<RedditMediaTelegram[]>((resolve) => resolve(records));
       const [chatIds, fridayImages] = await Promise.all([
         prChatIds,
         prFridayImages,
       ]);
       const fridayMessages = this.bot.createAlbums(
-        fridayImages,
+        fridayImages as IRedditApiRerod[],
         this.bot.reddit.mapRedditForTelegram
       );
       // Получить ссылку на метод, который отправляет альбомы

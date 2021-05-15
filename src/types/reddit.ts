@@ -74,9 +74,9 @@ export type RequestRedditRecords = {
  */
 export interface RedditMediaTelegram extends Partial<IRedditApiRerod> {
   /**
-   * Сообщение без ошибок?
+   * Изображение корректное для отправки в телеграмм?
    */
-  correct?: boolean;
+  correctImageDimension?: boolean;
 
   type?: MediaType;
   /**
@@ -89,3 +89,5 @@ export interface RedditMediaTelegram extends Partial<IRedditApiRerod> {
  * Тип медиаконтента
  */
 type MediaType = "video" | "photo";
+
+export type CorrectImageDimension = { [key: string]: boolean };

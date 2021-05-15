@@ -8,10 +8,12 @@ import {
   RequestRedditRecords,
   ResponseApiData,
   RedditMediaTelegram,
+  CorrectImageDimension,
 } from "../types/reddit";
 import FORBIDDEN_WORDS from "../const/forbiddenWords";
 
 import isCorrectImage from "./isCorrectImage";
+import { isCorrectImageDimension } from "./typeGuards";
 
 const { Client } = require("node-reddit-js");
 dotenv.config();
@@ -48,13 +50,8 @@ class Reddit {
       name,
       filterContent,
     });
-    const records = await this.checkCorrectImages(recordsReddit);
-    return records.reduce((acc: IRedditApiRerod[], record) => {
-      if (record.correct) {
-        acc.push({ title: record.title || "", url: record.url });
-      }
-      return acc;
-    }, []);
+    const records = await this.filterAvailableCorrectImages(recordsReddit);
+    return records;
   }
 
   /**
@@ -111,25 +108,32 @@ class Reddit {
   /**
    * Проверка корректности изображений для отправки в телеграм: ширина, высота, размер
    * @param {Array} records
-   * @returns {Promise}
+   * @returns {Promise} Отфильтрованные изображения
    */
-  private async checkCorrectImages(records: IRedditApiRerod[]) {
-    const promises = [];
+  private async filterAvailableCorrectImages(records: IRedditApiRerod[]) {
+    const promisesCorrectImages: Promise<CorrectImageDimension | boolean>[] =
+      [];
     for (const record of records) {
-      promises.push(
+      promisesCorrectImages.push(
         new Promise((resolve) => {
-          const { title, url } = record;
-          resolve(
-            isCorrectImage(url || "").then((correct) => ({
-              title,
-              url: url || "",
-              correct,
-            }))
-          );
-        }) as Promise<RedditMediaTelegram>
+          const { url = "" } = record;
+          resolve(isCorrectImage(url));
+        })
       );
     }
-    return Promise.all(promises);
+    const summaryCorrectImages = await Promise.all(promisesCorrectImages);
+    const re = records.reduce((acc: RedditMediaTelegram[], record, idx) => {
+      const correctImage = summaryCorrectImages[idx];
+      if (isCorrectImageDimension(correctImage)) {
+        const { url = "" } = record;
+        (record as RedditMediaTelegram).correctImageDimension = (
+          correctImage as unknown as CorrectImageDimension
+        )[url];
+        acc.push(record);
+      }
+      return acc;
+    }, []);
+    return re;
   }
 
   /**

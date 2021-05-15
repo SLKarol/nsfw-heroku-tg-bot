@@ -1,7 +1,7 @@
 import delay from "@stanislavkarol/delay";
 
 import { BotCommandHandler, ParsedCommandText } from "../types/telegramBot";
-import { RedditMediaTelegram } from "../types/reddit";
+import { IRedditApiRerod, RedditMediaTelegram } from "../types/reddit";
 
 import COMMANDS from "../const/commands";
 import type Reddit from "../lib/reddit";
@@ -94,7 +94,7 @@ class NSFWBot extends TelegramBot {
           return this.bot.sendMessage(chatId, "На канале нет новостей.");
         }
         const fridayMessages = this.createAlbums(
-          records,
+          records as IRedditApiRerod[],
           this.reddit.mapRedditForTelegram
         );
         return this.sendFridayContent({ chatId, fridayMessages }) as any;
@@ -284,9 +284,9 @@ ${e}`
         promise = bot.sendMediaGroup(chatId, group as any);
       } else {
         // Если это всего лишь одно видео, то отправить одно видео
-        const video = (isArray
-          ? (group as RedditMediaTelegram[])[0]
-          : group) as RedditMediaTelegram;
+        const video = (
+          isArray ? (group as RedditMediaTelegram[])[0] : group
+        ) as RedditMediaTelegram;
         const { title = "", media } = video;
         promise = bot.sendVideo(chatId, media as Buffer | string, {
           disable_notification: true,
