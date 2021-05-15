@@ -10,7 +10,11 @@ const ButtonReload = () => {
   const { loadRecords, appPending } = useModerateStore();
   const onClick = () => flowResult(loadRecords());
   return (
-    <Tooltip title="Запрашивает выбранный канал, выбранное содержимое">
+    <Tooltip
+      title={
+        !appPending ? "Запрашивает выбранный канал, выбранное содержимое" : ""
+      }
+    >
       <Button
         variant="contained"
         onClick={onClick}

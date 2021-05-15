@@ -1,18 +1,13 @@
 import { createContext, useContext } from "react";
 import { makeAutoObservable } from "mobx";
 
-import { IRedditApiRerod } from "../../../src/types/reddit";
-import {
-  ClientRedditApiRerod,
-  ResponseListRecords,
-  TypeNSFW,
-} from "../types/nsfw";
+import { RedditMediaTelegram } from "../../../src/types/reddit";
+import { ResponseListRecords, TypeNSFW } from "../types/nsfw";
 import { onChangeCheck, onChangeSelectValue } from "../types/functions";
 import { StateResponse } from "../types/common";
 
 import { ChannelsStore } from "../mobx/channels";
 import { downloadMedia } from "../lib/media";
-import correctDimension from "../lib/correctDimension";
 
 //! Исправить на динамичный выбор
 type WritableStringKeys = "typeMailing" | "selectedChannel";
@@ -33,7 +28,7 @@ export class ModerateFridayStore {
   /** Выбранный канал */
   selectedChannel = "";
   /** Записи для модерации */
-  recordsToModerate: ClientRedditApiRerod[] = [];
+  recordsToModerate: RedditMediaTelegram[] = [];
   /** Статус доступности */
   state: StateResponse = "done";
   /** IDs то есть- urls выбранных записей */
@@ -100,10 +95,7 @@ export class ModerateFridayStore {
       );
       const result: ResponseListRecords = yield response.json();
       const { records } = result;
-      this.recordsToModerate =
-        this.typeMailing === "photo"
-          ? yield this.checkCorrectImages(records)
-          : yield records;
+      this.recordsToModerate = records;
       this.state = "done";
       return true;
     } catch (err) {
@@ -120,7 +112,6 @@ export class ModerateFridayStore {
     const records = onlyCorrectDimensions
       ? recordsToModerate.filter((r) => r.correctImageDimension)
       : recordsToModerate;
-    console.log(recordsToModerate.length, records.length);
 
     return records.map((record) => ({
       ...record,
@@ -188,7 +179,7 @@ export class ModerateFridayStore {
   /**
    * Отправка выбранных фото в телеграмм
    */
-  private *sendSelectedPhoto(records: ClientRedditApiRerod[], name: string) {
+  private *sendSelectedPhoto(records: RedditMediaTelegram[], name: string) {
     this.state = "pending";
     try {
       const response: Response = yield fetch("/api/botFriday/sendFriday", {
@@ -209,7 +200,7 @@ export class ModerateFridayStore {
   /**
    * Отправка выбранных видео в телеграмм
    */
-  private *sendSelectedVideo(records: ClientRedditApiRerod[], name: string) {
+  private *sendSelectedVideo(records: RedditMediaTelegram[], name: string) {
     this.state = "pending";
     const token = localStorage.getItem("token");
     // Собрать видеозаписи
@@ -238,7 +229,7 @@ export class ModerateFridayStore {
    * @param {Object} record запись из recordsToModerate
    * @returns {boolean}
    */
-  __filterSelectedRecords = (record: ClientRedditApiRerod) =>
+  __filterSelectedRecords = (record: RedditMediaTelegram) =>
     this.selectedRecords.some((r) => r === record.url);
 
   fetchModerateFailure = (error: unknown) => {
@@ -271,8 +262,8 @@ export class ModerateFridayStore {
    * @param {Object} record
    * @returns
    */
-  __mapVideoForTelegram = (record: ClientRedditApiRerod) => {
-    const { title, url = "", urlAudio = "" } = record;
+  __mapVideoForTelegram = (record: RedditMediaTelegram) => {
+    const { title = "", url = "", urlAudio = "" } = record;
     const baseInfo: RecordAsReddit = {
       is_video: true,
       title,
@@ -287,20 +278,6 @@ export class ModerateFridayStore {
       return baseInfo;
     });
   };
-
-  /**
-   * Проверка на корректность изображения
-   */
-  private *checkCorrectImages(records: IRedditApiRerod[]) {
-    const re: ClientRedditApiRerod[] = [];
-    for (const redditRecord of records) {
-      const correctImageDimension: boolean = yield correctDimension(
-        redditRecord.url || ""
-      );
-      re.push({ ...redditRecord, correctImageDimension });
-    }
-    return re;
-  }
 
   /**
    * Сделать выбор корректного изображения недоступным для видео

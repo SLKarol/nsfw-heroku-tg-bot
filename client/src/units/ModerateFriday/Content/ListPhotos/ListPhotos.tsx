@@ -10,11 +10,21 @@ const ListPhotos = () => {
   return (
     <>
       {list.map((record) => {
-        const { url, title, checked } = record;
+        const {
+          url = "",
+          title = "",
+          checked,
+          correctImageDimension = false,
+        } = record;
         return (
           <figure key={url}>
-            <Photo url={url || ""} title={title} />
-            <CheckMaterial title={title} checked={checked} url={url || ""} />
+            <Photo url={url} title={title} />
+            <CheckMaterial
+              title={title}
+              checked={checked}
+              url={url}
+              correctMaterial={correctImageDimension}
+            />
           </figure>
         );
       })}

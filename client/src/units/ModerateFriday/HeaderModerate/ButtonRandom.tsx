@@ -9,7 +9,7 @@ const ButtonRandom = () => {
   const { loadFromRandomChannel, appPending } = useModerateStore();
 
   return (
-    <Tooltip title="Запрашивает случайный канал">
+    <Tooltip title={!appPending ? "Запрашивает случайный канал" : ""}>
       <Button
         variant="contained"
         onClick={loadFromRandomChannel}

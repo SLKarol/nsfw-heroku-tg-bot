@@ -8,11 +8,10 @@ import CheckMaterial from "../../../../components/CheckMaterial/CheckMaterial";
 
 const ListVideo = () => {
   const { list } = useModerateStore();
-  console.log(`list`, list);
   return (
     <>
       {list.map((record) => {
-        const { url = "", title, checked, urlAudio } = record;
+        const { url = "", title = "", checked, urlAudio } = record;
         return (
           <Grid key={url} item xs={12} sm={6} xl={4} md={4}>
             <figure>

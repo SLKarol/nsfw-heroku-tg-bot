@@ -1,4 +1,5 @@
-import { NSFWChannel, ClientRedditApiRerod, TypeNSFW } from "../types/nsfw";
+import { RedditMediaTelegram } from "../../../src/types/reddit";
+import { NSFWChannel, TypeNSFW } from "../types/nsfw";
 
 /**
  * Отправка nsfw
@@ -46,7 +47,7 @@ export function getNSFW(limit = 20) {
  * @param {Array} records
  * @returns {Promise}
  */
-export function sendFriday(records: ClientRedditApiRerod[]) {
+export function sendFriday(records: RedditMediaTelegram[]) {
   return fetch("/api/botFriday/sendFriday", {
     method: "POST",
     headers: {
