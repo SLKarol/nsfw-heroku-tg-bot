@@ -45,7 +45,8 @@
     "heroku-prebuild": "cd client/ && npm install && npm run build",
     "build": "tsc",
     "postinstall": "npm run build",
-    "test": "mocha"
+    "test": "mocha",
+    "test:manual": "cross-env NODE_ENV=development nodemon -r dotenv/config --watch 'src/**/*.ts' --exec 'ts-node --files' src/test/manual/getVideoURL.ts"
   },
   "keywords": [],
   "author": "",

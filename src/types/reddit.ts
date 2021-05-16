@@ -38,6 +38,10 @@ export interface RedditApiMedia {
   reddit_video?: {
     fallback_url: string;
   };
+  oembed?: {
+    html: string;
+    thumbnail_url?: string;
+  };
 }
 
 /**

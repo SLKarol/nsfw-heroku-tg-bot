@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-import * as HTMLParser from "node-html-parser";
+import { parse } from "node-html-parser";
 import fetch from "node-fetch";
 
 import {
@@ -185,10 +185,9 @@ class Reddit {
       name,
       filterContent,
     });
-
     const promises = recordsReddit.reduce(this.__getVideoUrl, []);
     const array = await Promise.all(promises);
-    const re = array.filter((i) => i !== null) as IRedditApiRerod[];
+    const re = array.filter((i) => i !== null && i.url) as IRedditApiRerod[];
     return re;
   }
 
@@ -201,17 +200,17 @@ class Reddit {
    * @param {Object} record.media Скомбинированная инфа о видео
    * @return {Promise<Array>} videoRecords
    */
-  __getVideoUrl(
+  __getVideoUrl = (
     listPromises: Promise<RedditMediaTelegram | null>[],
     record: IRedditApiRerod
-  ) {
+  ) => {
     const { url = "", title, media, preview = undefined } = record;
     // Это gifv?
-    if (!!(url as string).match(/.(gifv)$/i)) {
+    if (!!url.match(/.(gifv)$/i)) {
       listPromises.push(
         new Promise((resolve) =>
           resolve({
-            url: (url as string).replace(".gifv", ".mp4"),
+            url: url.replace(".gifv", ".mp4"),
             title,
             preview,
           })
@@ -226,23 +225,34 @@ class Reddit {
     // Это видео типа redgifs.com?
     const { type = "" } = media as RedditApiMedia;
     if (type === "redgifs.com") {
-      listPromises.push(
-        new Promise((resolve) =>
-          fetch(record.url as string).then((response) =>
-            response.text().then((htmlContent) => {
-              const root = HTMLParser.parse(htmlContent);
-              const source = root.querySelector("video>source");
-              if (source !== null) {
-                const { src, type } = source.rawAttributes;
-                if (type === "video/mp4") {
-                  resolve({ url: src, title, preview });
+      const recordUrl = this.__parseRedgifsUrl(record);
+      // Удалось получить ссылку на mp4?
+      if (recordUrl.endsWith(".mp4")) {
+        listPromises.push(
+          new Promise((resolve) => resolve({ title, url: recordUrl, preview }))
+        );
+        return listPromises;
+      }
+      // Если есть ссылка, то распарсить из неё video
+      if (recordUrl) {
+        listPromises.push(
+          new Promise((resolve) =>
+            fetch(recordUrl).then((response) =>
+              response.text().then((htmlContent) => {
+                const root = parse(htmlContent);
+                const source = root.querySelector("video>source");
+                if (source !== null) {
+                  const { src, type } = source.rawAttributes;
+                  if (type === "video/mp4") {
+                    resolve({ url: src, title, preview });
+                  }
                 }
-              }
-              resolve(null);
-            })
+                resolve(null);
+              })
+            )
           )
-        )
-      );
+        );
+      }
       return listPromises;
     }
     // Это обычное видео?
@@ -259,10 +269,11 @@ class Reddit {
           resolve({ url: urlVideo, title, urlAudio, preview })
         )
       );
+
       return listPromises;
     }
     return listPromises;
-  }
+  };
 
   /**
    * Получить записи reddit
@@ -285,6 +296,35 @@ class Reddit {
       ? this.filterContent(this.prepareRecords(children))
       : this.prepareRecords(children);
     return recordsWork;
+  }
+
+  /**
+   * Разобрать адрес из записи или media
+   */
+  __parseRedgifsUrl(record: IRedditApiRerod) {
+    const media = record.media as RedditApiMedia;
+    // Если есть url и пустое media, значит url отправить
+    if (record.url && !media) {
+      return record.url || "";
+    }
+    if ("media" in record) {
+      // Порядок парсинга урла такой: сперва thumbnail_url, затем html
+      const thumbnailUrl = media.oembed?.thumbnail_url || "";
+      // Если есть thumbnailUrl, то разобрать его
+      if (thumbnailUrl) {
+        // Изменить расширение у превью на .mp4
+        return thumbnailUrl.substr(0, thumbnailUrl.lastIndexOf(".")) + ".mp4";
+      }
+      // Если есть html, то его разобрать
+      const html = media.oembed?.html || "";
+      if (html) {
+        const iframe = parse(html).querySelector("iframe");
+        if (iframe) {
+          return iframe.getAttribute("src") || "";
+        }
+      }
+    }
+    return record.url || "";
   }
 }
 export default Reddit;
