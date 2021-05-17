@@ -30,11 +30,6 @@ export class ChannelsStore {
     this.handleSaveChannel = this.handleSaveChannel.bind(this);
     this.handleDeleteChannel = this.handleDeleteChannel.bind(this);
     this.loadList = this.loadList.bind(this);
-    // makeAutoObservable(this, {
-    //   handleSaveChannel: flow,
-    //   handleDeleteChannel: flow,
-    //   loadList: flow,
-    // });
     makeAutoObservable(this, {}, { autoBind: true });
   }
 
