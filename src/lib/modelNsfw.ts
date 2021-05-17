@@ -11,16 +11,12 @@ import { getDbConnection } from "./mongoDb";
 class ModelNsfw {
   /**
    * Возвращает список каналов
-   * @param {boolean} [withVideo=false] - Выдать только видео-каналы? Если true, то выдать все каналы
    */
-  async getListChannels(withVideo = false) {
-    const filter = withVideo
-      ? { withVideo: true }
-      : { $or: [{ withVideo: true }, { withVideo: false }] };
+  async getListChannels() {
     const db = await getDbConnection();
     const channels = db
       .collection<IChannel>("nsfwChannels")
-      .find(filter)
+      .find()
       .sort({ name: 1, withVideo: 1 });
     const re = await channels.toArray();
     return re;
