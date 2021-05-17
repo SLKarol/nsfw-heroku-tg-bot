@@ -1,3 +1,4 @@
+import { CallbackQuery, InlineKeyboardButton } from "node-telegram-bot-api";
 import delay from "@stanislavkarol/delay";
 
 import { BotCommandHandler, ParsedCommandText } from "../types/telegramBot";
@@ -30,6 +31,7 @@ class NSFWBot extends TelegramBot {
     this.db = db;
     this.reddit = reddit;
     this.setHandleCommands();
+    this.bot.on("callback_query", this.callbackQuery);
   }
 
   /**
@@ -64,6 +66,10 @@ class NSFWBot extends TelegramBot {
       {
         command: "channels",
         handler: this.listChannelsCommand.bind(this),
+      },
+      {
+        command: "test",
+        handler: this.testCommand,
       },
     ] as BotCommandHandler[];
     this.assignCommands(commands);
@@ -390,6 +396,58 @@ ${e}`
     }
     return limit;
   }
+
+  testCommand = async (chatId: string, parsedMessage: ParsedCommandText) => {
+    this.bot.sendMessage(chatId, "Получить список каналов...");
+    const channels = await this.db.getListChannels();
+    const inlineKeyboard = channels.reduce(
+      (acc: InlineKeyboardButton[][], c) => {
+        const icon = c.moderationRequired ? "🔞 " : "";
+        const nameChannel = `${icon} ${c.name}`;
+        acc.push([
+          { text: `${nameChannel} : 🖼️`, callback_data: `${c.name}/picture` },
+          { text: `${nameChannel} : 📽️`, callback_data: `${c.name}/video` },
+        ]);
+        return acc;
+      },
+      [
+        [
+          { text: `Случайно : 🖼️`, callback_data: "/picture" },
+          { text: `Случайно : 📽️`, callback_data: "/video" },
+        ],
+      ]
+    );
+    this.bot.sendMessage(chatId, "Выберите канал и тип контента:", {
+      reply_markup: {
+        resize_keyboard: true,
+        inline_keyboard: inlineKeyboard,
+      },
+    });
+  };
+
+  callbackQuery = async (callbackQuery: CallbackQuery) => {
+    const msg = callbackQuery.message || { chat: { id: 0 } };
+    await this.removeHisKeyboard(callbackQuery);
+    await this.bot.answerCallbackQuery(callbackQuery.id);
+    return this.bot.sendMessage(msg.chat.id, "You clicked!");
+  };
+
+  /**
+   * Удалить вывод клавиатуры
+   */
+  removeHisKeyboard = (callbackQuery: CallbackQuery) => {
+    const messageText = callbackQuery.message?.text || "";
+    const messageId = callbackQuery.message?.message_id || 0;
+    return this.bot
+      .editMessageText(messageText, {
+        message_id: messageId,
+        chat_id: callbackQuery.from.id,
+        reply_markup: {
+          inline_keyboard: [],
+        },
+      })
+      .catch((err) => console.error(err));
+  };
 }
 
 export default NSFWBot;
