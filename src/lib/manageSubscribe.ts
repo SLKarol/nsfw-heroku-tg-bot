@@ -61,9 +61,9 @@ class ManageSubscribe {
     const conn = await getConnection();
     const Subscribe = conn.model<ISubscribe>("Subscribe");
     // Собрать все задания, которые нужно выполнить
-    const tasks = await Subscribe.find({
+    const tasks = (await Subscribe.find({
       typeSubscribe: this.nameSubscribe,
-    }).distinct("chatId");
+    }).distinct("chatId")) as Array<string>;
     return tasks;
   }
 }
