@@ -204,10 +204,10 @@ export class ModerateFridayStore {
     this.state = "pending";
     const token = localStorage.getItem("token");
     // Собрать видеозаписи
-    const recordsToPublish: RecordAsReddit[] = yield Promise.all(
-      records.map(this.__mapVideoForTelegram)
-    );
     try {
+      const recordsToPublish: RecordAsReddit[] = yield Promise.all(
+        records.map(this.__mapVideoForTelegram)
+      );
       const response: Response = yield fetch("/api/botFriday/sendFridayVideo", {
         method: "POST",
         headers: {
@@ -259,8 +259,6 @@ export class ModerateFridayStore {
 
   /**
    * Подготовка видео к отправке в телеграмм
-   * @param {Object} record
-   * @returns
    */
   __mapVideoForTelegram = (record: RedditMediaTelegram) => {
     const { title = "", url = "", urlAudio = "" } = record;

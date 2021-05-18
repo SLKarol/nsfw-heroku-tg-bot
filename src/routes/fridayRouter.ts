@@ -114,9 +114,10 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     }
     // Отделить записи, где url в виде строки:
     // Потому что это gifv
-    const gifVideos = records
-      .filter((item: IRedditApiRerod) => typeof item.url === "string")
-      .map(this.bot.reddit.mapVideoRedditForTelegram);
+    const gifVideos = this.bot.createAlbums(
+      records.filter((item: IRedditApiRerod) => typeof item.url === "string"),
+      this.bot.reddit.mapVideoRedditForTelegram
+    );
     // Обычные видео-альбомы для телеграм.
     const listAlbums = this.bot.createAlbums(
       records.filter((item: any) => typeof item.url !== "string"),

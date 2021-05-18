@@ -210,47 +210,6 @@ ${e}`
   };
 
   /**
-   * Отправка видео
-   * todo: научить бот мерджить аудио и видеодорожки.
-   * @param {string|number} chatId ID Чата
-   * @param {string} redditChannelName Название канала
-   * @param {number} maxCount Количество запрашиваемых записей
-   */
-  sendVideos = async (
-    chatId: string,
-    redditChannelName: string,
-    maxCount: number = 20
-  ) => {
-    const { bot } = this;
-    await bot.sendMessage(chatId, `Канал *${redditChannelName}* сообщает ...`, {
-      parse_mode: "Markdown",
-    });
-    try {
-      const list = await this.reddit.getNewVideoRecords({
-        name: redditChannelName,
-        limit: maxCount,
-      });
-      if (list === null || !list.length) {
-        return bot.sendMessage(chatId, "Новых видео не найдено.");
-      }
-      console.log("list :>> ", list);
-      // const listAlbums = this.createAlbums(
-      //   list,
-      //   this.reddit.mapVideoRedditForTelegram
-      // );
-
-      // return this.sendFridayContentVideo({ chatId, list: listAlbums }) as any;
-    } catch (e) {
-      console.error(e);
-      bot.sendMessage(
-        chatId,
-        `Произошла ошибка:
-${e}`
-      );
-    }
-  };
-
-  /**
    * Отправка видеоконтента
    * @param {Object} props
    * @param {string|number} props.chatId ID чата
@@ -271,8 +230,6 @@ ${e}`
     const { bot } = this;
     const promises = [];
     for (const group of list) {
-      console.log(group);
-
       const isArray = Array.isArray(group);
       let promise;
       if ((group as RedditMediaTelegram[]).length > 1 && isArray) {
@@ -306,17 +263,32 @@ ${e}`
    */
   helpCommand = (chatId: string) => {
     const { bot } = this;
-    let helpText = `Телеграм-бот, созданный для развлечения, а не для работы.\n\n*Доступные команды:*\n`;
-    helpText += COMMANDS.reduce((acc, cmd) => {
-      const { command, description, hideHelp = false } = cmd;
-      if (!hideHelp) {
-        acc += `*/${command}* ${description}\n`;
-      }
-      return acc;
-    }, "");
-    return bot.sendMessage(chatId, helpText, {
-      parse_mode: "Markdown",
-    });
+    // let helpText = `Телеграм-бот, созданный для развлечения, а не для работы.\n\n*Доступные команды:*\n`;
+    // helpText += COMMANDS.reduce((acc, cmd) => {
+    //   const { command, description, hideHelp = false } = cmd;
+    //   if (!hideHelp) {
+    //     acc += `*/${command}* ${description}\n`;
+    //   }
+    //   return acc;
+    // }, "");
+    // return bot.sendMessage(chatId, helpText, {
+    //   parse_mode: "Markdown",
+    // });
+    return bot.sendMediaGroup(chatId, [
+      {
+        media:
+          "https://thumbs2.redgifs.com/ClosedFatherlyAtlanticblackgoby-mobile.mp4",
+        type: "video",
+        caption:
+          "Insta caught If you put your cock inside her you are not allowed to pull out.😈",
+      },
+      // {
+      //   media:
+      //     "https://thumbs2.redgifs.com/ClosedFatherlyAtlanticblackgoby-mobile.mp4",
+      //   type: "video",
+      //   caption: "Insta caught If you put your cock inside her you ",
+      // },
+    ]);
   };
 
   /**
