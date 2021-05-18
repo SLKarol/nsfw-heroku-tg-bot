@@ -179,16 +179,16 @@ class Reddit {
     limit = 10,
     name = "tikhot",
     filterContent = true,
-  }): Promise<IRedditApiRerod[]> {
+  }) {
     const recordsReddit = await this.requestRedditRecords({
       limit,
       name,
       filterContent,
     });
-    const promises = recordsReddit.reduce(this.__getVideoUrl, []);
-    const array = await Promise.all(promises);
-    const re = array.filter((i) => i !== null && i.url) as IRedditApiRerod[];
-    return re;
+    let promises = recordsReddit.reduce(this.__getVideoUrl, []);
+    const arrayRedditMedia = await Promise.all(promises);
+    const workRecords = arrayRedditMedia.filter((i) => i !== null && i.url);
+    return workRecords;
   }
 
   /**

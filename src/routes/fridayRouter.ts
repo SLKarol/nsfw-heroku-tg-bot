@@ -103,51 +103,40 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
    */
   sendFridayVideo = asyncHandler(async (req, res) => {
     const { records = [], name = "nsfw", filterContent = true } = req.body;
-    // Получить Название канала
-    const infoChannel = await this.bot.getChannelInfo({
-      commandArgs: [name],
-      text: "",
-    });
-    // Получить сообщения для рассылки
-    const prFridayMessages = !records.length
-      ? this.bot.reddit.getNewVideoRecords({
-          limit: 10,
-          name: infoChannel.name,
-          filterContent,
-        })
-      : new Promise<IRedditApiRerod[]>((resolve) => resolve(records));
+    // Если не прислали видео, значит на этом закончена работа
+    if (!records.length) {
+      return res.status(200).json({ status: "ok" });
+    }
     // Получить ID Чатов для рассылки
-    const prChatIds = this.getChatForMailing();
-
-    return Promise.all([prChatIds, prFridayMessages])
-      .then(([chatIds, list]) => {
-        // Защититься от повторного запроса
-        const arrayIds = Array.from(new Set(chatIds));
-        // Отделить записи, где url в виде строки:
-        // Потому что это gifv
-        const gifVideos = list
-          .filter((item) => typeof item.url === "string")
-          .map(this.bot.reddit.mapVideoRedditForTelegram);
-        // Обычные видео-альбомы для телеграм.
-        const listAlbums = this.bot.createAlbums(
-          list.filter((item) => typeof item.url !== "string"),
-          this.bot.reddit.mapVideoRedditForTelegram
-        );
-        const recordsToTelegram = [...listAlbums, ...gifVideos];
-        const promises = list.length
-          ? arrayIds.map((chatId) =>
-              this.bot.sendFridayContentVideo({
-                chatId,
-                list: recordsToTelegram,
-              })
-            )
-          : [];
-        return Promise.all(promises);
-      })
-      .then((resultWork) =>
-        this.analyzeModerateWork(resultWork as ParamAnalyzer[], res)
-      )
-      .catch((e) => res.status(400).json({ error: e }));
+    const arrayIds = await this.getChatForMailing();
+    if (!arrayIds.length) {
+      return res.status(200).json({ status: "ok" });
+    }
+    // Отделить записи, где url в виде строки:
+    // Потому что это gifv
+    const gifVideos = records
+      .filter((item: IRedditApiRerod) => typeof item.url === "string")
+      .map(this.bot.reddit.mapVideoRedditForTelegram);
+    // Обычные видео-альбомы для телеграм.
+    const listAlbums = this.bot.createAlbums(
+      records.filter((item: any) => typeof item.url !== "string"),
+      this.bot.reddit.mapVideoRedditForTelegram
+    );
+    const recordsToTelegram = [...listAlbums, ...gifVideos];
+    try {
+      const promises = records.length
+        ? arrayIds.map((chatId) =>
+            this.bot.sendFridayContentVideo({
+              chatId,
+              list: recordsToTelegram,
+            })
+          )
+        : [];
+      const resultWork = await Promise.all(promises);
+      return this.analyzeModerateWork(resultWork as ParamAnalyzer[], res);
+    } catch (e) {
+      return res.status(400).json({ error: e });
+    }
   });
 
   sendBOR = (req: express.Request, res: express.Response) => {

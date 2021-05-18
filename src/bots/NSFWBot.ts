@@ -41,60 +41,55 @@ class NSFWBot extends TelegramBot {
     const commands = [
       {
         command: "friday",
-        handler: this.fridayCommand.bind(this),
+        handler: this.fridayCommand,
       },
       {
         command: "subscribe",
-        handler: this.subscribeCommand.bind(this),
+        handler: this.subscribeCommand,
       },
       {
         command: "unsubscribe",
-        handler: this.unSubscribeCommand.bind(this),
+        handler: this.unSubscribeCommand,
       },
       {
         command: "quit",
-        handler: this.quitCommand.bind(this),
-      },
-      {
-        command: "video",
-        handler: this.videoCommand.bind(this),
+        handler: this.quitCommand,
       },
       {
         command: "help",
-        handler: this.helpCommand.bind(this),
+        handler: this.helpCommand,
       },
       {
         command: "channels",
-        handler: this.listChannelsCommand.bind(this),
+        handler: this.listChannelsCommand,
       },
-      {
-        command: "test",
-        handler: this.testCommand,
-      },
-    ] as BotCommandHandler[];
+    ] as unknown as BotCommandHandler[];
     this.assignCommands(commands);
   }
 
   /**
-   * Обработка команды /friday
+   * Отправка изображений
+   * ! private ??
    * @param {string|number} chatId ID Чата
-   * @param {ParsedCommandText} parsedMessage Команда боту
+   * @param {string} redditChannelName Название канала
+   * @param {number} maxCount Количество запрашиваемых записей
    */
-  async fridayCommand(chatId: string, parsedMessage: ParsedCommandText) {
-    const requestChannelInfo = await this.getChannelInfo(parsedMessage);
-    if (!requestChannelInfo.correct) {
-      return this.bot.sendMessage(chatId, "Увы, введён незнакомый канал.");
-    }
-    const { name } = requestChannelInfo;
-    // Получить параметр с количеством записей:
-    const limit = this.getMaxCountRecords(parsedMessage);
+  sendPictures = async (
+    chatId: string,
+    redditChannelName: string,
+    maxCount: number = 20
+  ) => {
     // Отправка контента в телеграм
-    await this.bot.sendMessage(chatId, `Канал *${name}* сообщает ...`, {
-      parse_mode: "Markdown",
-    });
+    await this.bot.sendMessage(
+      chatId,
+      `Канал *${redditChannelName}* сообщает ...`,
+      {
+        parse_mode: "Markdown",
+      }
+    );
 
     this.reddit
-      .getNewRecords({ name, limit })
+      .getNewRecords({ name: redditChannelName, limit: maxCount })
       .then((records) => {
         if (!records.length) {
           return this.bot.sendMessage(chatId, "На канале нет новостей.");
@@ -112,7 +107,7 @@ class NSFWBot extends TelegramBot {
           parse_mode: "Markdown",
         });
       });
-  }
+  };
 
   /**
    * Рассылка пятничных фото
@@ -147,7 +142,6 @@ class NSFWBot extends TelegramBot {
           .then(() => delay(700))
           .then(() => ({ status: "ok" }))
           .catch((err) => {
-            console.error("sendFridayContent Error: ", err);
             return { status: "error", error: err };
           })
       );
@@ -159,7 +153,7 @@ class NSFWBot extends TelegramBot {
    * Обработка команды бота /subscribe
    * @param {string|number} chatId ID канала
    */
-  subscribeCommand(chatId: string) {
+  subscribeCommand = (chatId: string) => {
     const { bot } = this;
     bot
       .sendMessage(chatId, "Подписаться на рассылку...")
@@ -173,13 +167,13 @@ class NSFWBot extends TelegramBot {
 ${e}`
         );
       });
-  }
+  };
 
   /**
    * Обработка команды бота /unsubscribe
    * @param {string|number} chatId ID канала
    */
-  unSubscribeCommand(chatId: string) {
+  unSubscribeCommand = (chatId: string) => {
     const { bot } = this;
     bot
       .sendMessage(chatId, "Отписаться от рассылки...")
@@ -193,13 +187,13 @@ ${e}`
 ${e}`
         );
       });
-  }
+  };
 
   /**
    * Обработка команды бота /quit
    * @param {string|number} chatId ID канала
    */
-  quitCommand(chatId: string) {
+  quitCommand = (chatId: string) => {
     const { bot } = this;
     bot
       .sendMessage(chatId, "Я ухожу...")
@@ -213,55 +207,48 @@ ${e}`
 ${e}`
         );
       });
-  }
+  };
 
   /**
-   * Обработка команды бота /video
+   * Отправка видео
    * todo: научить бот мерджить аудио и видеодорожки.
-   * @param {string|number} chatId ID канала
-   * @param {TelegramBot} bot Бот
-   * @param {ParsedCommandText} parsedMessage Команда боту
+   * @param {string|number} chatId ID Чата
+   * @param {string} redditChannelName Название канала
+   * @param {number} maxCount Количество запрашиваемых записей
    */
-  async videoCommand(chatId: string, parsedMessage: ParsedCommandText) {
-    const requestChannelInfo = await this.getChannelInfo(parsedMessage);
-    if (!requestChannelInfo.correct) {
-      return this.bot.sendMessage(chatId, "Увы, введён незнакомый канал.");
-    }
+  sendVideos = async (
+    chatId: string,
+    redditChannelName: string,
+    maxCount: number = 20
+  ) => {
     const { bot } = this;
-    const { name } = requestChannelInfo;
-    // Получить параметр с количеством записей:
-    const limit = this.getMaxCountRecords(parsedMessage, 10);
-
-    bot
-      .sendMessage(chatId, `Канал *${name}* сообщает ...`, {
-        parse_mode: "Markdown",
-      })
-      .then(() =>
-        this.reddit.getNewVideoRecords({
-          name,
-          limit,
-        })
-      )
-      .then((list) => {
-        if (list === null || !list.length) {
-          return bot.sendMessage(chatId, "Новых видео не найдено.");
-        }
-        const listAlbums = this.createAlbums(
-          list,
-          this.reddit.mapVideoRedditForTelegram
-        );
-
-        return this.sendFridayContentVideo({ chatId, list: listAlbums }) as any;
-      })
-      .catch((e) => {
-        console.error(e);
-        bot.sendMessage(
-          chatId,
-          `Произошла ошибка:
-${e}`
-        );
+    await bot.sendMessage(chatId, `Канал *${redditChannelName}* сообщает ...`, {
+      parse_mode: "Markdown",
+    });
+    try {
+      const list = await this.reddit.getNewVideoRecords({
+        name: redditChannelName,
+        limit: maxCount,
       });
-  }
+      if (list === null || !list.length) {
+        return bot.sendMessage(chatId, "Новых видео не найдено.");
+      }
+      console.log("list :>> ", list);
+      // const listAlbums = this.createAlbums(
+      //   list,
+      //   this.reddit.mapVideoRedditForTelegram
+      // );
+
+      // return this.sendFridayContentVideo({ chatId, list: listAlbums }) as any;
+    } catch (e) {
+      console.error(e);
+      bot.sendMessage(
+        chatId,
+        `Произошла ошибка:
+${e}`
+      );
+    }
+  };
 
   /**
    * Отправка видеоконтента
@@ -284,6 +271,8 @@ ${e}`
     const { bot } = this;
     const promises = [];
     for (const group of list) {
+      console.log(group);
+
       const isArray = Array.isArray(group);
       let promise;
       if ((group as RedditMediaTelegram[]).length > 1 && isArray) {
@@ -304,7 +293,6 @@ ${e}`
           .then(() => delay(700))
           .then(() => statusOk)
           .catch((err) => {
-            console.error("sendFridayContent Error: ", err);
             return { status: "error", error: err };
           })
       );
@@ -316,7 +304,7 @@ ${e}`
    * Обработка команды бота /help
    * @param {string|number} chatId ID канала
    */
-  helpCommand(chatId: string) {
+  helpCommand = (chatId: string) => {
     const { bot } = this;
     let helpText = `Телеграм-бот, созданный для развлечения, а не для работы.\n\n*Доступные команды:*\n`;
     helpText += COMMANDS.reduce((acc, cmd) => {
@@ -329,13 +317,13 @@ ${e}`
     return bot.sendMessage(chatId, helpText, {
       parse_mode: "Markdown",
     });
-  }
+  };
 
   /**
    * Вывести список каналов
    * @param {string|number} chatId
    */
-  listChannelsCommand(chatId: string) {
+  listChannelsCommand = (chatId: string) => {
     const { bot } = this;
     this.db
       .getListChannels()
@@ -352,7 +340,7 @@ ${e}`
         return bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
       })
       .catch((err) => console.error(err));
-  }
+  };
 
   /**
    * Получить имя канала
@@ -377,27 +365,9 @@ ${e}`
   }
 
   /**
-   * Получить из команды максимальное количество записей
-   * @param {ParsedCommandText} parsedMessage Команда боту
-   * @param {number} defaultMaxCount - По умолчанию
-   * @returns {number} количество записей
+   * Вывести список каналов и тип рассылки
    */
-  private getMaxCountRecords(
-    parsedMessage: ParsedCommandText,
-    defaultMaxCount = 20
-  ) {
-    // Получить параметр с количеством записей:
-    let limit = defaultMaxCount;
-    if (parsedMessage.commandArgs?.length === 2) {
-      const paramLimit = parseInt(parsedMessage.commandArgs[1], 10);
-      if (paramLimit !== NaN && paramLimit < 51 && paramLimit > 0) {
-        limit = paramLimit;
-      }
-    }
-    return limit;
-  }
-
-  testCommand = async (chatId: string, parsedMessage: ParsedCommandText) => {
+  fridayCommand = async (chatId: string) => {
     this.bot.sendMessage(chatId, "Получить список каналов...");
     const channels = await this.db.getListChannels();
     const inlineKeyboard = channels.reduce(
@@ -406,18 +376,12 @@ ${e}`
         const nameChannel = `${icon} ${c.name}`;
         acc.push([
           { text: `${nameChannel} : 🖼️`, callback_data: `${c.name}/picture` },
-          { text: `${nameChannel} : 📽️`, callback_data: `${c.name}/video` },
         ]);
         return acc;
       },
-      [
-        [
-          { text: `Случайно : 🖼️`, callback_data: "/picture" },
-          { text: `Случайно : 📽️`, callback_data: "/video" },
-        ],
-      ]
+      [[{ text: `Случайный : 🖼️`, callback_data: "/picture" }]]
     );
-    this.bot.sendMessage(chatId, "Выберите канал и тип контента:", {
+    this.bot.sendMessage(chatId, "Выберите канал:", {
       reply_markup: {
         resize_keyboard: true,
         inline_keyboard: inlineKeyboard,
@@ -425,11 +389,23 @@ ${e}`
     });
   };
 
+  /**
+   * Обработчик выбора "далоговых" кнопок
+   */
   callbackQuery = async (callbackQuery: CallbackQuery) => {
-    const msg = callbackQuery.message || { chat: { id: 0 } };
-    await this.removeHisKeyboard(callbackQuery);
+    const msg = callbackQuery.message || { chat: { id: "" } };
+    // await this.removeHisKeyboard(callbackQuery);
     await this.bot.answerCallbackQuery(callbackQuery.id);
-    return this.bot.sendMessage(msg.chat.id, "You clicked!");
+    const { data = "" } = callbackQuery;
+    let [channelName, typeFriday] = data.split("/");
+    if (!typeFriday) return;
+    // Если задан случайный канал,  получить случайный
+    if (!channelName) {
+      const channel = await this.db.getRandomChannel();
+      channelName = channel.name;
+    }
+    if (typeFriday === "picture")
+      return this.sendPictures(msg.chat.id.toString(), channelName);
   };
 
   /**
