@@ -9,7 +9,6 @@ import cors from "cors";
 import asyncHandler from "express-async-handler";
 import * as dotenv from "dotenv";
 
-import TOKEN from "./const/token";
 import Reddit from "./lib/reddit";
 import NSFWBot from "./bots/NSFWBot";
 import FridayRouter from "./routes/fridayRouter";
@@ -21,11 +20,15 @@ import isFriDay from "./lib/isFriDay";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
+const TOKEN =
+  process.env.NODE_ENV !== "development"
+    ? process.env.TOKEN
+    : process.env.TELEGRAM_TOKEN_DEV;
 
 const app = express();
 const db = new ModelNsfw();
 const reddit = new Reddit();
-const nsfwBot = new NSFWBot(TOKEN, reddit, db);
+const nsfwBot = new NSFWBot("" + TOKEN, reddit, db);
 
 // CORS
 app.use(cors());
