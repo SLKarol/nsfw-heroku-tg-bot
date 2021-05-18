@@ -39,6 +39,10 @@ export class ModerateFridayStore {
   onlyCorrectDimensions: boolean = false;
 
   constructor() {
+    this.loadRecords = this.loadRecords.bind(this);
+    this.sendSelectedPhoto = this.sendSelectedPhoto.bind(this);
+    this.sendSelectedVideo = this.sendSelectedVideo.bind(this);
+    this.loadFromRandomChannel = this.loadFromRandomChannel.bind(this);
     makeAutoObservable(this, {}, { autoBind: true });
     this.channelsStore = new ChannelsStore(this.onLoadChannels);
   }
