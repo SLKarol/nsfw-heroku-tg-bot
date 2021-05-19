@@ -58,12 +58,13 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
    */
   sendFriday = asyncHandler(
     async (req: express.Request, res: express.Response) => {
-      const { records = [], name } = req.body;
+      const { records = [], name = "" } = req.body;
       // Получить Название канала
-      const infoChannel = await this.bot.getChannelInfo({
-        commandArgs: [name],
-        text: "",
-      });
+      const infoChannel = await this.bot.getChannelInfo(name);
+      // Если название канала некорректное или его нет, то найти случайный канал
+      if (!name || !infoChannel.correct) {
+        infoChannel.name = (await this.bot.db.getRandomChannel()).name;
+      }
       // Получить ID Чатов для рассылки
       const prChatIds = this.getChatForMailing();
       // Получить список изображений
@@ -90,7 +91,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
           body: JSON.stringify({ chatId: id, fridayMessages }),
         });
       }
-      res.status(200).json({ status: "ok" });
+      res.status(200).json({ success: true });
     }
   );
 
@@ -105,12 +106,12 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     const { records = [], name = "nsfw", filterContent = true } = req.body;
     // Если не прислали видео, значит на этом закончена работа
     if (!records.length) {
-      return res.status(200).json({ status: "ok" });
+      return res.status(200).json({ success: true });
     }
     // Получить ID Чатов для рассылки
     const arrayIds = await this.getChatForMailing();
     if (!arrayIds.length) {
-      return res.status(200).json({ status: "ok" });
+      return res.status(200).json({ success: true });
     }
     // Отделить записи, где url в виде строки:
     // Потому что это gifv
@@ -280,7 +281,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
       );
     }
     res.status(422).json({
-      status: false,
+      success: false,
       validationErrors: [{ type: "Неизвестный тип содержимого" }],
     });
   });
@@ -299,7 +300,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     //resultWork это результат работы промисов.
     // Задача в том, чтобы найти промис, где есть ошибка
     const errorInPromise = resultWork.find((item) =>
-      item.some((re) => re.status === "error")
+      item.some((re) => !re.success)
     );
     if (errorInPromise) {
       const error = Array.isArray(errorInPromise)
@@ -307,7 +308,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
         : errorInPromise;
       return res.status(400).json(error);
     }
-    return res.status(200).json({ status: "ok" });
+    return res.status(200).json({ success: true });
   };
 
   /**
@@ -317,8 +318,10 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     const { fridayMessages, chatId } = req.body;
     this.bot
       .sendFridayContent({ chatId, fridayMessages })
-      .then(() => res.status(200).json({ status: "ok" }))
-      .catch((error) => res.status(500).json({ error }));
+      .then(() => res.status(200).json({ success: true }))
+      .catch((error) =>
+        res.status(500).json({ success: false, message: error })
+      );
   };
 
   /**
@@ -334,7 +337,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     if (!errors.isEmpty()) {
       if (!errors.isEmpty()) {
         return res.status(422).json({
-          status: false,
+          success: false,
           validationErrors: errors.array(),
         });
       }
@@ -343,9 +346,13 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     this.bot.db
       .addNewChannel(name, withVideo, moderationRequired)
       .then((result) => {
-        return res.status(200).json({ id: result.insertedId });
+        return res
+          .status(200)
+          .json({ success: true, message: result.insertedId });
       })
-      .catch((error) => res.status(500).json({ error }));
+      .catch((error) =>
+        res.status(500).json({ success: false, message: error })
+      );
   };
 
   /**
@@ -363,7 +370,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     if (!errors.isEmpty()) {
       if (!errors.isEmpty()) {
         return res.status(422).json({
-          status: false,
+          success: false,
           validationErrors: errors.array(),
         });
       }
@@ -372,9 +379,11 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     this.bot.db
       .updateChannel(channelId, name, withVideo, moderationRequired)
       .then(() => {
-        return res.status(200).json({ status: "ok" });
+        return res.status(200).json({ success: true });
       })
-      .catch((error) => res.status(500).json({ error }));
+      .catch((error) =>
+        res.status(500).json({ success: false, message: error })
+      );
   };
 
   /**
@@ -386,14 +395,16 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
         .status(401)
         .json({ message: "Ошибка авторизации", success: false });
     }
-
     const channelId = req.params.channelId;
+    return res.status(200).json({ success: true });
     this.bot.db
       .deleteChannel(channelId)
-      .then((r) => {
-        return res.status(200).json({ status: "ok", result: r.result });
+      .then(() => {
+        return res.status(200).json({ success: true });
       })
-      .catch((error) => res.status(500).json({ error }));
+      .catch((error) =>
+        res.status(500).json({ success: false, message: error })
+      );
   };
 }
 

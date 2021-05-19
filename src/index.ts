@@ -40,7 +40,7 @@ app.use(authMiddleware);
 const fridayRouer = new FridayRouter(nsfwBot, "/api/botFriday");
 app.use("/api/botFriday", fridayRouer.router);
 app.use("/api/auth", authRoutes);
-app.post("/api/bashOrgs", getBashContent);
+app.get("/api/bashOrg", getBashContent);
 
 /**
  * Сегодня пятница или праздничный день?

@@ -1,30 +1,20 @@
 import { RedditMediaTelegram } from "../../../src/types/reddit";
 import { NSFWChannel, TypeNSFW } from "../types/nsfw";
 
+import { isResponseError } from "./responseError";
+
 /**
  * Отправка nsfw
  * @returns {Promise}
  */
 export async function sendNSFW(type: TypeNSFW) {
   const token = localStorage.getItem("token");
-  const url = type === "photo" ? "sendFriday" : "sendFridayVideo";
-  const channels = await getListChannels();
-  const filteredChannels = channels.filter((ch) => {
-    if (type === "video") {
-      return ch.withVideo;
-    }
-    return !ch.withVideo;
-  });
-  // Найти случайный канал: Сократит время выполнения на сервере.
-  const randomChannel =
-    filteredChannels[Math.floor(Math.random() * filteredChannels.length)];
-  return fetch(`/api/botFriday/${url}`, {
+  return fetch("/api/botFriday/sendFriday", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ name: randomChannel.name }),
   }).then((r) => r.status);
 }
 
@@ -67,6 +57,9 @@ export async function getListChannels() {
     },
   });
   const result = await response.json();
-  const { channels } = result;
-  return channels as NSFWChannel[];
+  if (!isResponseError(result)) {
+    const { channels } = result;
+    return channels as NSFWChannel[];
+  }
+  throw result.message;
 }

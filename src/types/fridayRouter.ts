@@ -36,6 +36,6 @@ export type RequestContent = {
 };
 
 export type ParamAnalyzer = (
-  | { status: string }
-  | { status: string; error: any }
+  | { success: boolean }
+  | { success: boolean; message: any }
 )[];

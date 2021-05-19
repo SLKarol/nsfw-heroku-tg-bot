@@ -8,10 +8,10 @@ import { StateResponse } from "../types/common";
 
 import { ChannelsStore } from "../mobx/channels";
 import { downloadMedia } from "../lib/media";
+import { ResponseError } from "../lib/responseError";
 
 //! Исправить на динамичный выбор
 type WritableStringKeys = "typeMailing" | "selectedChannel";
-type ResponseResult = { status: string; error: { message: string } };
 interface RecordAsReddit {
   is_video: boolean;
   title: string;
@@ -194,7 +194,7 @@ export class ModerateFridayStore {
         body: JSON.stringify({ records, name }),
       });
       this.state = "success";
-      const data: ResponseResult = yield response.json();
+      const data: ResponseError = yield response.json();
       this.analyzeResponse(data);
     } catch (err) {
       this.fetchModerateFailure(err);
@@ -221,7 +221,7 @@ export class ModerateFridayStore {
         body: JSON.stringify({ records: recordsToPublish, name }),
       });
       this.state = "success";
-      const data: ResponseResult = yield response.json();
+      const data: ResponseError = yield response.json();
       this.analyzeResponse(data);
     } catch (err) {
       this.fetchModerateFailure(err);
@@ -245,20 +245,20 @@ export class ModerateFridayStore {
    * Анализ ответа api
    * @param {Object} json
    */
-  analyzeResponse = (json: ResponseResult) => {
+  analyzeResponse = (json: ResponseError) => {
     this.state = "error";
     // Найти ответ
-    const { status, error } = json;
-    if (status.toLowerCase() === "ok") {
+    const { message, success } = json;
+    if (success) {
       this.state = "success";
       this.error = null;
       return;
     }
-    if (error && typeof error === "object" && "message" in error) {
-      this.error = error.message;
-      return;
-    }
-    this.error = JSON.stringify(error);
+    // if (message && typeof message === "object" && "message" in message) {
+    //   this.error = message;
+    //   return;
+    // }
+    this.error = JSON.stringify(message);
   };
 
   /**

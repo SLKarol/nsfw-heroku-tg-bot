@@ -5,8 +5,8 @@ import { ContentRSS } from "../types/bashOrg";
  * @returns {Promise<Object>}
  */
 export function getListBashOrg() {
-  return fetch("/api/bashOrgs", {
-    method: "POST",
+  return fetch("/api/bashOrg", {
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
     },

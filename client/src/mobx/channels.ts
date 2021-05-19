@@ -2,16 +2,13 @@ import { createContext, useContext } from "react";
 import { makeAutoObservable, flowResult } from "mobx";
 
 import { NSFWChannel } from "../types/nsfw";
-
-import { getListChannels } from "../lib/nsfw";
 import { ClickHandler, EmptyFunction } from "../types/functions";
 import { StateResponse } from "../types/common";
-import { isError, ResponseError } from "../lib/responseError";
+
+import { getListChannels } from "../lib/nsfw";
+import { ResponseError } from "../lib/responseError";
 
 type TypesOperation = "view" | "edit" | "add" | "delete" | "refresh";
-type ResponseCrUp = {
-  id: string;
-};
 
 export class ChannelsStore {
   list: NSFWChannel[] = [];
@@ -38,11 +35,18 @@ export class ChannelsStore {
    */
   *loadList() {
     this.state = "pending";
-    const channels: NSFWChannel[] = yield getListChannels();
-    this.state = "done";
-    this.list = channels;
-    if (this.onLoadChannels) {
-      this.onLoadChannels();
+    this.list = [];
+    try {
+      const channels: ResponseError | NSFWChannel[] = yield getListChannels();
+      this.state = "done";
+      this.error = "";
+      this.list = channels as NSFWChannel[];
+      if (this.onLoadChannels) {
+        this.onLoadChannels();
+      }
+    } catch (e) {
+      this.state = "error";
+      this.error = e.toString();
     }
   }
 
@@ -106,10 +110,6 @@ export class ChannelsStore {
       method = "PUT";
       restUrl += `/${this.selectedChannel}`;
     }
-    if (currentOperation === "delete") {
-      method = "DELETE";
-      restUrl += `/${this.selectedChannel}`;
-    }
     try {
       let response: Response = yield fetch(restUrl, {
         method,
@@ -119,16 +119,16 @@ export class ChannelsStore {
         },
         body: JSON.stringify({ name, withVideo, moderationRequired }),
       });
-      const data: ResponseCrUp = yield response.json();
-      if (isError(data)) {
-        return this.analyzeError(data as ResponseError);
+      const data: ResponseError = yield response.json();
+      if (!data.success) {
+        return this.analyzeError(data);
       }
       this.state = "done";
       this.error = "";
       // В зависимости от вида операции выбор того, что делать дальше
       if (currentOperation === "add") {
         return this.addChannel({
-          _id: data.id,
+          _id: data.message,
           name,
           withVideo,
           moderationRequired,
@@ -142,11 +142,9 @@ export class ChannelsStore {
           moderationRequired,
         });
       }
-      if (currentOperation === "delete") {
-        return this.deleteChannel(this.selectedChannel);
-      }
     } catch (err) {
-      //! Описать ошибку
+      this.state = "error";
+      this.error = err.toString();
     }
   }
 
@@ -167,16 +165,17 @@ export class ChannelsStore {
           },
         }
       );
-      const data: ResponseCrUp = yield response.json();
-      if (isError(data)) {
-        return this.analyzeError(data as ResponseError);
+      this.operation = "view";
+      const data: ResponseError = yield response.json();
+      if (!data.success) {
+        return this.analyzeError(data);
       }
       this.state = "done";
       this.error = "";
       this.deleteChannel(this.selectedChannel);
-      this.operation = "view";
     } catch (err) {
-      //! Описать ошибку
+      this.state = "error";
+      this.error = err.toString();
     }
   }
 

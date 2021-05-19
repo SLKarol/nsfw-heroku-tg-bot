@@ -16,7 +16,7 @@ export function postLogin(req: Request, res: Response, next: NextFunction) {
   if (!errors.isEmpty()) {
     if (!errors.isEmpty()) {
       return res.status(422).json({
-        status: false,
+        success: false,
         validationErrors: errors.array(),
       });
     }

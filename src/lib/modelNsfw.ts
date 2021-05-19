@@ -41,14 +41,20 @@ class ModelNsfw {
 
   /**
    * Получить случайный не модерируемый канал
-   * @param {boolean} allowModerateChannel Искать среди них и те, которые требуют модерации?
+   * @param {boolean} allowModerateChannel Включать в список случайных и те, которые требуют модерации?
    */
   async getRandomChannel(allowModerateChannel = false) {
     const db = await getDbConnection();
     const propsQuery = [];
-    if (allowModerateChannel) {
-      propsQuery.push({ $match: { moderationRequired: true } });
+
+    if (!allowModerateChannel) {
+      propsQuery.push({
+        $match: {
+          $and: [{ moderationRequired: false }, { withVideo: false }],
+        },
+      });
     }
+
     propsQuery.push({ $sample: { size: 1 } });
     const channels = await db
       .collection<IChannel>("nsfwChannels")

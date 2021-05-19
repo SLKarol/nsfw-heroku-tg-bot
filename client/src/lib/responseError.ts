@@ -1,5 +1,6 @@
 export type ResponseError = {
-  status: boolean;
+  message: string;
+  success: boolean;
   validationErrors: {
     value: string;
     msg: string;
@@ -7,6 +8,6 @@ export type ResponseError = {
     location: string;
   }[];
 };
-export function isError(val: unknown): val is ResponseError {
-  return (val as ResponseError).validationErrors !== undefined;
+export function isResponseError(val: unknown): val is ResponseError {
+  return (val as ResponseError).success !== undefined;
 }

@@ -7,7 +7,7 @@ import Row from "./Row";
 type Props = {};
 
 const TableRows: FC<Props> = () => {
-  const { list } = useChannelStore();
+  const { list = [] } = useChannelStore();
   return (
     <>
       {list.map((row) => (

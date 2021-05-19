@@ -125,24 +125,13 @@ class NSFWBot extends TelegramBot {
     const { bot } = this;
     const promises = [];
     for (const group of fridayMessages) {
-      let promise;
-      if (group.length > 1) {
-        promise = bot.sendMediaGroup(chatId, group as any);
-      } else {
-        // Если это всего лишь одно фото, то отправить одно фото
-        const [photo] = group;
-        promise = bot.sendPhoto(chatId, photo.media as string, {
-          disable_notification: true,
-          caption: photo.title,
-        });
-        // .catch((err) => err);
-      }
       promises.push(
-        promise
+        bot
+          .sendMediaGroup(chatId, group as any)
           .then(() => delay(700))
-          .then(() => ({ status: "ok" }))
+          .then(() => ({ success: true }))
           .catch((err) => {
-            return { status: "error", error: err };
+            return { success: false, message: err };
           })
       );
     }
@@ -223,7 +212,7 @@ ${e}`
     // list: RedditMediaTelegram[][] | RedditMediaTelegram[];
     list: (RedditMediaTelegram | RedditMediaTelegram[])[];
   }) {
-    const statusOk = { status: "ok" };
+    const statusOk = { success: true };
     if (!list.length) {
       return Promise.resolve(statusOk);
     }
@@ -231,26 +220,13 @@ ${e}`
     const promises = [];
     for (const group of list) {
       const isArray = Array.isArray(group);
-      let promise;
-      if ((group as RedditMediaTelegram[]).length > 1 && isArray) {
-        promise = bot.sendMediaGroup(chatId, group as any);
-      } else {
-        // Если это всего лишь одно видео, то отправить одно видео
-        const video = (
-          isArray ? (group as RedditMediaTelegram[])[0] : group
-        ) as RedditMediaTelegram;
-        const { title = "", media } = video;
-        promise = bot.sendVideo(chatId, media as Buffer | string, {
-          disable_notification: true,
-          caption: title,
-        });
-      }
       promises.push(
-        promise
+        bot
+          .sendMediaGroup(chatId, group as any)
           .then(() => delay(700))
           .then(() => statusOk)
           .catch((err) => {
-            return { status: "error", error: err };
+            return { success: false, message: err };
           })
       );
     }
@@ -263,32 +239,15 @@ ${e}`
    */
   helpCommand = (chatId: string) => {
     const { bot } = this;
-    // let helpText = `Телеграм-бот, созданный для развлечения, а не для работы.\n\n*Доступные команды:*\n`;
-    // helpText += COMMANDS.reduce((acc, cmd) => {
-    //   const { command, description, hideHelp = false } = cmd;
-    //   if (!hideHelp) {
-    //     acc += `*/${command}* ${description}\n`;
-    //   }
-    //   return acc;
-    // }, "");
-    // return bot.sendMessage(chatId, helpText, {
-    //   parse_mode: "Markdown",
-    // });
-    return bot.sendMediaGroup(chatId, [
-      {
-        media:
-          "https://thumbs2.redgifs.com/ClosedFatherlyAtlanticblackgoby-mobile.mp4",
-        type: "video",
-        caption:
-          "Insta caught If you put your cock inside her you are not allowed to pull out.😈",
-      },
-      // {
-      //   media:
-      //     "https://thumbs2.redgifs.com/ClosedFatherlyAtlanticblackgoby-mobile.mp4",
-      //   type: "video",
-      //   caption: "Insta caught If you put your cock inside her you ",
-      // },
-    ]);
+    let helpText = `Телеграм-бот, созданный для развлечения, а не для работы.\n\n*Доступные команды:*\n`;
+    helpText += COMMANDS.reduce((acc, cmd) => {
+      const { command, description } = cmd;
+      acc += `*/${command}* ${description}\n`;
+      return acc;
+    }, "");
+    return bot.sendMessage(chatId, helpText, {
+      parse_mode: "Markdown",
+    });
   };
 
   /**
@@ -315,23 +274,16 @@ ${e}`
   };
 
   /**
-   * Получить имя канала
-   * @param {ParsedCommandText} parsedMessage Команда
+   * Получить информацию о канале
    */
-  async getChannelInfo(parsedMessage: ParsedCommandText) {
-    const { commandArgs = [] } = parsedMessage;
+  async getChannelInfo(channelName: string) {
     let requestChannelInfo = { name: "", correct: false };
     // Проверка корректности названия канала
-    if (commandArgs.length && commandArgs[0]) {
-      requestChannelInfo.name = commandArgs[0];
+    if (channelName) {
+      requestChannelInfo.name = channelName;
       requestChannelInfo.correct = await this.db.checkCorrectChannel(
-        requestChannelInfo.name
+        channelName
       );
-    } else {
-      // Если названия нет, то нужно получить случайное
-      const randomChannel = await this.db.getRandomChannel();
-      requestChannelInfo.name = randomChannel.name;
-      requestChannelInfo.correct = true;
     }
     return requestChannelInfo;
   }
@@ -374,7 +326,7 @@ ${e}`
     if (!typeFriday) return;
     // Если задан случайный канал,  получить случайный
     if (!channelName) {
-      const channel = await this.db.getRandomChannel();
+      const channel = await this.db.getRandomChannel(true);
       channelName = channel.name;
     }
     if (typeFriday === "picture")

@@ -12,7 +12,6 @@ type Token = {
  * Миддлвар для проверки наличия авторизации
  */
 function auth(req: Request, res: Response, next: NextFunction) {
-  // const authHeader = req.get("Authorization");
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     req.isAuth = false;
