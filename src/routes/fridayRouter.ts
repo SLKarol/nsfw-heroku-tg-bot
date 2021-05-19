@@ -396,7 +396,6 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
         .json({ message: "Ошибка авторизации", success: false });
     }
     const channelId = req.params.channelId;
-    return res.status(200).json({ success: true });
     this.bot.db
       .deleteChannel(channelId)
       .then(() => {
