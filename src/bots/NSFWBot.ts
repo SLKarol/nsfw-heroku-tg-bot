@@ -366,6 +366,7 @@ ${e}`
    */
   callbackQuery = async (callbackQuery: CallbackQuery) => {
     const msg = callbackQuery.message || { chat: { id: "" } };
+    // Спрятать клавиатуру
     // await this.removeHisKeyboard(callbackQuery);
     await this.bot.answerCallbackQuery(callbackQuery.id);
     const { data = "" } = callbackQuery;
