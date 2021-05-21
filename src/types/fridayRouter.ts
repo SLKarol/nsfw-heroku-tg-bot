@@ -46,4 +46,5 @@ export type RequestFriday = {
   fridayMessages: RedditMediaTelegram[][];
   chatId: string;
   channel: string;
+  holidayMessage?: string;
 };

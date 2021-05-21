@@ -1,4 +1,7 @@
 import fetch from "node-fetch";
+import getHolydays from "@stanislavkarol/get-holidays";
+
+import randomItem from "./randomItem";
 
 type ResponsePublicHolidays = {
   date: string;
@@ -28,4 +31,19 @@ export default async function isFriDay() {
   const sDate = today.toISOString().split("T")[0];
   // Есть праздничный день?
   return data.some((r) => r.date === sDate);
+}
+
+/**
+ * Генерация текста о текущем празднике
+ */
+export async function getHolydayMessage() {
+  try {
+    const list = await getHolydays();
+    if (list.length) {
+      return `Я смотрю, вы тут празднуете ${randomItem(list)}`;
+    }
+    return "";
+  } catch (e) {
+    return "";
+  }
 }

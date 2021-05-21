@@ -39,9 +39,6 @@ const Mailing: FC = () => {
         <Button data-name="photo" onClick={onClick}>
           Рассылка фото
         </Button>
-        <Button data-name="video" onClick={onClick} disabled>
-          Рассылка видео
-        </Button>
       </ButtonGroup>
       <Error message={status} severity="info" />
     </>

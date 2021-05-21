@@ -9,6 +9,7 @@ import { StateResponse } from "../types/common";
 import { ChannelsStore } from "../mobx/channels";
 import { downloadMedia } from "../lib/media";
 import { ResponseError } from "../lib/responseError";
+import randomItem from "../lib/randomItem";
 
 //! Исправить на динамичный выбор
 type WritableStringKeys = "typeMailing" | "selectedChannel";
@@ -305,7 +306,7 @@ export class ModerateFridayStore {
   *loadFromRandomChannel() {
     // Получить случайный канал
     const { list } = this.channelsStore;
-    const channel = list[(list.length * Math.random()) | 0];
+    const channel = randomItem(list);
     this.selectedChannel = channel._id;
     yield this.loadRecords();
   }

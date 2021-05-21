@@ -15,6 +15,7 @@ import {
 } from "../types/fridayRouter";
 
 import AppBotRouter from "../lib/appBotRouter";
+import { getHolydayMessage } from "../lib/isFriDay";
 
 /**
  * @typedef {import('../bots/NSFWBot.js')} NSFWBot
@@ -48,6 +49,8 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
       this.editChannel
     );
     this.router.delete("/channels/:channelId", this.deleteChannel);
+    this.router.post("/postListVideo", this.postListVideo);
+    this.router.post("/postVideo", this.postVideo);
   }
 
   /**
@@ -60,6 +63,8 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
       const { records = [], name = "" } = req.body;
       // Получить Название канала
       const infoChannel = await this.bot.getChannelInfo(name);
+      // Получить название праздника
+      const holidayMessage = await getHolydayMessage();
       // Если название канала некорректное или его нет, то найти случайный канал
       if (!name || !infoChannel.correct) {
         infoChannel.name = (await this.bot.db.getRandomChannel()).name;
@@ -91,6 +96,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
             chatId: id,
             fridayMessages,
             channel: infoChannel.name,
+            holidayMessage,
           }),
         });
       }
@@ -106,44 +112,42 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
    * @param {Response} res
    */
   sendFridayVideo = asyncHandler(async (req, res) => {
-    const { records = [], name = "nsfw", filterContent = true } = req.body;
+    const { records = [], name = "" } = req.body;
     // Если не прислали видео, значит на этом закончена работа
     if (!records.length) {
       return res.status(200).json({ success: true });
     }
     // Получить ID Чатов для рассылки
-    const arrayIds = await this.getChatForMailing();
-    if (!arrayIds.length) {
+    const chatIds = await this.getChatForMailing();
+    if (!chatIds.length) {
       return res.status(200).json({ success: true });
     }
-    // Отделить записи, где url в виде строки:
-    // Потому что это gifv
-    const gifVideos = this.bot.createAlbums(
-      records.filter((item: IRedditApiRerod) => typeof item.url === "string"),
-      this.bot.reddit.mapVideoRedditForTelegram
-    );
-    // Обычные видео-альбомы для телеграм.
-    const listAlbums = this.bot.createAlbums(
-      records.filter((item: any) => typeof item.url !== "string"),
-      this.bot.reddit.mapVideoRedditForTelegram
-    );
-    const recordsToTelegram = [...listAlbums, ...gifVideos];
-    try {
-      const promises = records.length
-        ? arrayIds.map((chatId) =>
-            this.bot.sendFridayContentVideo({
-              chatId,
-              list: recordsToTelegram,
-            })
-          )
-        : [];
-      const resultWork = await Promise.all(promises);
-      return this.analyzeModerateWork(resultWork as ParamAnalyzer[], res);
-    } catch (e) {
-      return res.status(400).json({ error: e });
+    // Получить Название канала
+    const infoChannel = await this.bot.getChannelInfo(name);
+    // Получить название праздника
+    const holidayMessage = await getHolydayMessage();
+    // Отправить альбомы в телеграм, каждому клиенту
+    const url = `${BASE_URL}/api/botFriday/postListVideo`;
+    for (const id of chatIds) {
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chatId: id,
+          records,
+          channel: infoChannel.name,
+          holidayMessage,
+        }),
+      });
     }
+    res.status(200).json({ success: true });
   });
 
+  /**
+   * Отправить выпуски БОР через телеграм
+   */
   sendBOR = (req: express.Request, res: express.Response) => {
     if (!req.isAuth) {
       return res
@@ -321,9 +325,9 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     req: express.Request<{}, {}, RequestFriday>,
     res: express.Response
   ) => {
-    const { fridayMessages, chatId, channel } = req.body;
+    const { fridayMessages, chatId, channel, holidayMessage } = req.body;
     this.bot
-      .sendFridayContent({ chatId, fridayMessages, channel })
+      .sendFridayContent({ chatId, fridayMessages, channel, holidayMessage })
       .then(() => res.status(200).json({ success: true }))
       .catch((error) =>
         res.status(500).json({ success: false, message: error })
@@ -407,6 +411,45 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
       .then(() => {
         return res.status(200).json({ success: true });
       })
+      .catch((error) =>
+        res.status(500).json({ success: false, message: error })
+      );
+  };
+
+  /**
+   * Отправляет список видео
+   */
+  postListVideo = asyncHandler(async (req, res) => {
+    const { records, chatId, channel, holidayMessage } = req.body;
+    await this.bot.introFriday({
+      channelName: channel,
+      chatId,
+      holidayMessage,
+    });
+    const url = `${BASE_URL}/api/botFriday/postVideo`;
+    records.forEach((r: any) => {
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chatId,
+          record: r,
+        }),
+      });
+    });
+  });
+
+  /**
+   * Отправка одного видео в телеграмм-контакт
+   */
+  postVideo = (req: express.Request, res: express.Response) => {
+    const { record, chatId } = req.body;
+    const videoRecord = this.bot.reddit.mapVideoRedditForTelegram(record);
+    this.bot
+      .sendFridayContentVideo({ chatId, video: videoRecord })
+      .then(() => res.status(200).json({ success: true }))
       .catch((error) =>
         res.status(500).json({ success: false, message: error })
       );

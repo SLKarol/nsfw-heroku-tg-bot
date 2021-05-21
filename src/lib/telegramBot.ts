@@ -10,6 +10,7 @@ import {
 } from "../types/telegramBot";
 
 import ManageSubscribe from "./manageSubscribe";
+import randomItem from "./randomItem";
 
 const regexUserText = /^\/([^@\s]+)@?(?:(\S+)|)\s?([\s\S]+)?$/i;
 
@@ -110,7 +111,7 @@ class TelegramBot {
    */
   funnyReply(message: string) {
     const replies = FUNNY_REPLY_TEXT.split("|");
-    const re = replies[Math.floor(Math.random() * replies.length)];
+    const re = randomItem(replies);
     return `${re}
   _${message}_`;
   }

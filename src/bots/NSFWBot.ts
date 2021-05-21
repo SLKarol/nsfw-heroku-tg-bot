@@ -1,7 +1,11 @@
-import { CallbackQuery, InlineKeyboardButton } from "node-telegram-bot-api";
+import {
+  CallbackQuery,
+  InlineKeyboardButton,
+  InputMedia,
+} from "node-telegram-bot-api";
 import delay from "@stanislavkarol/delay";
 
-import { BotCommandHandler, ParsedCommandText } from "../types/telegramBot";
+import { BotCommandHandler } from "../types/telegramBot";
 import { IRedditApiRerod, RedditMediaTelegram } from "../types/reddit";
 
 import COMMANDS from "../const/commands";
@@ -9,6 +13,8 @@ import type Reddit from "../lib/reddit";
 import type ModelNsfw from "../lib/modelNsfw";
 
 import TelegramBot from "../lib/telegramBot";
+import { getHolydayMessage } from "../lib/isFriDay";
+import { RequestFriday } from "../types/fridayRouter";
 
 /**
  * Телеграм-бот для nsfw
@@ -117,21 +123,19 @@ class NSFWBot extends TelegramBot {
    * @param {Array} props.fridayMessages Пятничный контент в виде альбомов
    * @param {string} props.channel Название reddit-канала
    */
-  sendFridayContent = ({
+  sendFridayContent = async ({
     chatId,
     fridayMessages,
-    channel = "",
-  }: {
-    chatId: string;
-    fridayMessages: RedditMediaTelegram[][];
-    channel: string;
-  }) => {
+    channel,
+    holidayMessage,
+  }: RequestFriday) => {
     const { bot } = this;
+    await this.introFriday({ chatId, channelName: channel, holidayMessage });
     const promises = [];
     for (const group of fridayMessages) {
       promises.push(
-        this.introFriday({ chatId, channelName: channel })
-          .then(() => bot.sendMediaGroup(chatId, group as any))
+        bot
+          .sendMediaGroup(chatId, group as InputMedia[])
           .then(() => delay(700))
           .then(() => ({ success: true }))
           .catch((err) => {
@@ -206,35 +210,16 @@ ${e}`
    * Отправка видеоконтента
    * @param {Object} props
    * @param {string|number} props.chatId ID чата
-   * @param {Array} props.list Массив альбомов
+   * @param {Array} props.video Видео
    */
   async sendFridayContentVideo({
     chatId,
-    list,
+    video,
   }: {
     chatId: string;
-    // list: RedditMediaTelegram[][] | RedditMediaTelegram[];
-    list: (RedditMediaTelegram | RedditMediaTelegram[])[];
+    video: any;
   }) {
-    const statusOk = { success: true };
-    if (!list.length) {
-      return Promise.resolve(statusOk);
-    }
-    const { bot } = this;
-    const promises = [];
-    for (const group of list) {
-      const isArray = Array.isArray(group);
-      promises.push(
-        bot
-          .sendMediaGroup(chatId, group as any)
-          .then(() => delay(700))
-          .then(() => statusOk)
-          .catch((err) => {
-            return { success: false, message: err };
-          })
-      );
-    }
-    return Promise.all(promises);
+    return this.bot.sendVideo(chatId, video.media, { caption: video.caption });
   }
 
   /**
@@ -355,15 +340,30 @@ ${e}`
   };
 
   /**
-   * Написать приветственное сообщение перед выпуском
+   * Написать приветственное сообщение
    */
-  private introFriday = ({
+  introFriday = async ({
     channelName,
     chatId,
+    holidayMessage,
   }: {
     chatId: string;
     channelName: string;
+    holidayMessage?: string;
   }) => {
+    // Если ежедневная рассылка, то описание праздника уже пришло:
+    if (holidayMessage) {
+      await this.bot.sendMessage(chatId, holidayMessage, {
+        parse_mode: "Markdown",
+      });
+    } else {
+      const holiday = await getHolydayMessage();
+      if (holiday) {
+        await this.bot.sendMessage(chatId, holiday, {
+          parse_mode: "Markdown",
+        });
+      }
+    }
     return this.bot.sendMessage(
       chatId,
       `Канал *${channelName}* представляет:`,
