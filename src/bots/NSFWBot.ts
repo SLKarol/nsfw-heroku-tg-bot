@@ -80,33 +80,34 @@ class NSFWBot extends TelegramBot {
     maxCount: number = 20
   ) => {
     // Отправка контента в телеграм
-    await this.bot.sendMessage(
-      chatId,
-      `Канал *${redditChannelName}* сообщает ...`,
-      {
-        parse_mode: "Markdown",
-      }
-    );
-
-    this.reddit
-      .getNewRecords({ name: redditChannelName, limit: maxCount })
-      .then((records) => {
-        if (!records.length) {
-          return this.bot.sendMessage(chatId, "На канале нет новостей.");
-        }
-        const fridayMessages = this.createAlbums(
-          records as IRedditApiRerod[],
-          this.reddit.mapRedditForTelegram
-        );
-        return this.sendFridayContent({ chatId, fridayMessages }) as any;
-      })
-      .then(() => this.bot.sendMessage(chatId, "На этом у меня всё."))
-      .catch((err) => {
-        console.error(err);
-        this.bot.sendMessage(chatId, `В работе возникла ошибка:\n${err}`, {
-          parse_mode: "Markdown",
-        });
+    try {
+      const records = await this.reddit.getNewRecords({
+        name: redditChannelName,
+        limit: maxCount,
       });
+      if (!records.length) {
+        return this.bot.sendMessage(
+          chatId,
+          `На канале *${redditChannelName}* не нашлось никаких записей.`,
+          {
+            parse_mode: "Markdown",
+          }
+        );
+      }
+      const fridayMessages = this.createAlbums(
+        records as IRedditApiRerod[],
+        this.reddit.mapRedditForTelegram
+      );
+      return this.sendFridayContent({
+        chatId,
+        fridayMessages,
+        channel: redditChannelName,
+      });
+    } catch (err) {
+      return this.bot.sendMessage(chatId, `В работе возникла ошибка:\n${err}`, {
+        parse_mode: "Markdown",
+      });
+    }
   };
 
   /**
@@ -114,20 +115,23 @@ class NSFWBot extends TelegramBot {
    * @param {Object} props
    * @param {string|number} props.chatId ID чата
    * @param {Array} props.fridayMessages Пятничный контент в виде альбомов
+   * @param {string} props.channel Название reddit-канала
    */
   sendFridayContent = ({
     chatId,
     fridayMessages,
+    channel = "",
   }: {
     chatId: string;
     fridayMessages: RedditMediaTelegram[][];
+    channel: string;
   }) => {
     const { bot } = this;
     const promises = [];
     for (const group of fridayMessages) {
       promises.push(
-        bot
-          .sendMediaGroup(chatId, group as any)
+        this.introFriday({ chatId, channelName: channel })
+          .then(() => bot.sendMediaGroup(chatId, group as any))
           .then(() => delay(700))
           .then(() => ({ success: true }))
           .catch((err) => {
@@ -348,6 +352,25 @@ ${e}`
         },
       })
       .catch((err) => console.error(err));
+  };
+
+  /**
+   * Написать приветственное сообщение перед выпуском
+   */
+  private introFriday = ({
+    channelName,
+    chatId,
+  }: {
+    chatId: string;
+    channelName: string;
+  }) => {
+    return this.bot.sendMessage(
+      chatId,
+      `Канал *${channelName}* представляет:`,
+      {
+        parse_mode: "Markdown",
+      }
+    );
   };
 }
 

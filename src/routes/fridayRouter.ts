@@ -7,12 +7,11 @@ import { body, validationResult } from "express-validator";
 import BASE_URL from "../const/baseUrl";
 import { IRedditApiRerod, RedditMediaTelegram } from "../types/reddit";
 import { RecordBor } from "../types/bor";
-
 import type NSFWBot from "../bots/NSFWBot";
 import {
-  RequestContent,
   GetNSFWParams,
   ParamAnalyzer,
+  RequestFriday,
 } from "../types/fridayRouter";
 
 import AppBotRouter from "../lib/appBotRouter";
@@ -88,7 +87,11 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ chatId: id, fridayMessages }),
+          body: JSON.stringify({
+            chatId: id,
+            fridayMessages,
+            channel: infoChannel.name,
+          }),
         });
       }
       res.status(200).json({ success: true });
@@ -314,10 +317,13 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
   /**
    * Отправка пятничного содержимого в телеграмм-канал
    */
-  postFridayTelegram = (req: express.Request, res: express.Response) => {
-    const { fridayMessages, chatId } = req.body;
+  postFridayTelegram = (
+    req: express.Request<{}, {}, RequestFriday>,
+    res: express.Response
+  ) => {
+    const { fridayMessages, chatId, channel } = req.body;
     this.bot
-      .sendFridayContent({ chatId, fridayMessages })
+      .sendFridayContent({ chatId, fridayMessages, channel })
       .then(() => res.status(200).json({ success: true }))
       .catch((error) =>
         res.status(500).json({ success: false, message: error })

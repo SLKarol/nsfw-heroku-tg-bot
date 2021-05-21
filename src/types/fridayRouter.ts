@@ -1,3 +1,5 @@
+import { RedditMediaTelegram } from "./reddit";
+
 export type GetNSFWParams = {
   /**
    * Максимальное количество записей
@@ -39,3 +41,9 @@ export type ParamAnalyzer = (
   | { success: boolean }
   | { success: boolean; message: any }
 )[];
+
+export type RequestFriday = {
+  fridayMessages: RedditMediaTelegram[][];
+  chatId: string;
+  channel: string;
+};
