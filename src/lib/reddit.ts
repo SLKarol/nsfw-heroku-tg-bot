@@ -151,11 +151,11 @@ class Reddit {
   /**
    * Подготовка видео для отправки в телеграм
    */
-  mapVideoRedditForTelegram = (reddit: IRedditApiRerod) => {
+  mapVideoRedditForTelegram = (reddit: RedditMediaTelegram) => {
     const { url = "", title } = reddit;
     const re = {
       type: "video",
-      caption: title,
+      title,
       media: url,
     } as RedditMediaTelegram;
     if (typeof url === "string") {

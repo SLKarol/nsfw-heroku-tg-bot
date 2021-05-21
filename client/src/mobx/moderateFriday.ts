@@ -192,7 +192,7 @@ export class ModerateFridayStore {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ records, name }),
+        body: JSON.stringify({ records, channel: name }),
       });
       this.state = "success";
       const data: ResponseError = yield response.json();
@@ -219,7 +219,7 @@ export class ModerateFridayStore {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ records: recordsToPublish, name }),
+        body: JSON.stringify({ records: recordsToPublish, channel: name }),
       });
       this.state = "success";
       const data: ResponseError = yield response.json();

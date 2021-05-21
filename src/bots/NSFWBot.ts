@@ -217,9 +217,11 @@ ${e}`
     video,
   }: {
     chatId: string;
-    video: any;
+    video: Partial<IRedditApiRerod>;
   }) {
-    return this.bot.sendVideo(chatId, video.media, { caption: video.caption });
+    return this.bot.sendVideo(chatId, video.media as any, {
+      caption: video.title,
+    });
   }
 
   /**

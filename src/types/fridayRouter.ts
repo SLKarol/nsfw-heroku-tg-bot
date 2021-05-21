@@ -48,3 +48,15 @@ export type RequestFriday = {
   channel: string;
   holidayMessage?: string;
 };
+
+export type RequestSendFriday = {
+  records?: RedditMediaTelegram[];
+  chatId: string;
+  channel: string;
+  holidayMessage?: string;
+};
+
+export type PostVideo = {
+  record: RedditMediaTelegram;
+  chatId: string;
+};
