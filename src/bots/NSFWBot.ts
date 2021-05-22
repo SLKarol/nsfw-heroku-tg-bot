@@ -130,7 +130,9 @@ class NSFWBot extends TelegramBot {
     holidayMessage,
   }: RequestFriday) => {
     const { bot } = this;
-    await this.introFriday({ chatId, channelName: channel, holidayMessage });
+    if (holidayMessage) {
+      await this.introFriday({ chatId, channelName: channel, holidayMessage });
+    }
     const promises = [];
     for (const group of fridayMessages) {
       promises.push(

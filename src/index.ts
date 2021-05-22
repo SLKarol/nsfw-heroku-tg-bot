@@ -16,7 +16,6 @@ import ModelNsfw from "./lib/modelNsfw";
 import authMiddleware from "./middleware/auth";
 import authRoutes from "./routes/auth";
 import getBashContent from "./controllers/bash";
-import isFriDay from "./lib/isFriDay";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -41,17 +40,6 @@ const fridayRouer = new FridayRouter(nsfwBot, "/api/botFriday");
 app.use("/api/botFriday", fridayRouer.router);
 app.use("/api/auth", authRoutes);
 app.get("/api/bashOrg", getBashContent);
-
-/**
- * Сегодня пятница или праздничный день?
- */
-app.post(
-  "/api/isFriday",
-  asyncHandler(async (req, res) => {
-    const checkDay = await isFriDay();
-    return res.status(200).json({ isFriday: checkDay });
-  })
-);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static("client/build"));

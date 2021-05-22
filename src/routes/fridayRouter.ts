@@ -17,7 +17,7 @@ import {
 } from "../types/fridayRouter";
 
 import AppBotRouter from "../lib/appBotRouter";
-import { getHolydayMessage } from "../lib/isFriDay";
+import { getHolydayMessage, isFriDay } from "../lib/isFriDay";
 import { TChannel } from "../types/channel";
 
 /**
@@ -54,6 +54,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     this.router.delete("/channels/:channelId", this.deleteChannel);
     this.router.post("/postListVideo", this.postListVideo);
     this.router.post("/postVideo", this.postVideo);
+    this.router.post("/fridayMailing", this.fridayMailing);
   }
 
   /**
@@ -454,6 +455,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
           }),
         });
       });
+      res.status(200).json({ success: true });
     }
   );
 
@@ -473,6 +475,21 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
         res.status(500).json({ success: false, message: error })
       );
   };
+
+  /**
+   * Отправка решения
+   */
+  fridayMailing = asyncHandler(async (req, res) => {
+    const isDate = await isFriDay();
+    let status = "not sent";
+    if (isDate) {
+      status = "sent";
+      fetch(`${BASE_URL}/api/botFriday/sendFriday/`, {
+        method: "POST",
+      });
+    }
+    res.status(200).json({ status });
+  });
 }
 
 export default FridayRouter;

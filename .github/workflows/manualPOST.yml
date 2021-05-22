@@ -1,10 +1,10 @@
 name: Cron for friday mailing
 on:
   schedule:
-    - cron: "0 6 * * 5"
+    - cron: "30 5 * * *"
 jobs:
   cron:
     runs-on: ubuntu-latest
     steps:
       - name: Call friday sheduler
-        run: curl -X POST https://nfsw-telegram-bot.herokuapp.com/api/botFriday/sendFriday
+        run: curl -X POST https://nfsw-telegram-bot.herokuapp.com/api/botFriday/fridayMailing

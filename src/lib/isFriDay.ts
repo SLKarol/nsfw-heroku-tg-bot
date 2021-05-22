@@ -10,7 +10,7 @@ type ResponsePublicHolidays = {
 /**
  * Сегодня разве пятница или праздник?
  */
-export default async function isFriDay() {
+export async function isFriDay() {
   /** Текущий день */
   const today = new Date();
   /** День недели */
@@ -18,19 +18,23 @@ export default async function isFriDay() {
   if (currentDay === 5) {
     return true;
   }
-  //--- Получить список праздников
 
-  /** Текущий год */
-  const year = today.getFullYear();
-  const response = await fetch(
-    `https://date.nager.at/api/v2/PublicHolidays/${year}/RU`
-  );
-  /** @type {Array} */
-  const data = (await response.json()) as ResponsePublicHolidays[];
-  /** гггг-мм-дд */
-  const sDate = today.toISOString().split("T")[0];
-  // Есть праздничный день?
-  return data.some((r) => r.date === sDate);
+  //--- Получить список официальных праздников
+  // через try...catch, если их служба отвалится
+  try {
+    /** Текущий год */
+    const year = today.getFullYear();
+    const response = await fetch(
+      `https://date.nager.at/api/v3/PublicHolidays/${year}/RU`
+    );
+    const data = (await response.json()) as ResponsePublicHolidays[];
+    /** гггг-мм-дд */
+    const sDate = today.toISOString().split("T")[0];
+    // Есть праздничный день?
+    return data.some((r) => r.date === sDate);
+  } catch (e) {
+    return false;
+  }
 }
 
 /**
