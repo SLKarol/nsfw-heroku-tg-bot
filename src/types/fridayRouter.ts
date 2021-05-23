@@ -1,4 +1,6 @@
-import { RedditMediaTelegram } from "./reddit";
+import { InputMediaPhoto } from "node-telegram-bot-api";
+
+import { RedditTelegram } from "./reddit";
 
 export type GetNSFWParams = {
   /**
@@ -14,27 +16,6 @@ export type GetNSFWParams = {
    * Фильтровать контент на предмет запрещённых слов?
    */
   filterContent: boolean;
-
-  // type
-};
-
-export type RequestContent = {
-  /**
-   * Тип контента
-   */
-  type: "photo" | "video";
-  /**
-   * Название канала
-   */
-  channel: string;
-  /**
-   * Фильтровать контент на предмет запрещённых слов?
-   */
-  filterContent: boolean;
-  /**
-   * Максимальное к-во записей
-   */
-  limit: number;
 };
 
 export type ParamAnalyzer = (
@@ -43,20 +24,20 @@ export type ParamAnalyzer = (
 )[];
 
 export type RequestFriday = {
-  fridayMessages: RedditMediaTelegram[][];
+  fridayMessages: InputMediaPhoto[][];
   chatId: string;
   channel: string;
   holidayMessage?: string;
 };
 
 export type RequestSendFriday = {
-  records?: RedditMediaTelegram[];
+  records?: RedditTelegram[];
   chatId: string;
   channel: string;
   holidayMessage?: string;
 };
 
 export type PostVideo = {
-  record: RedditMediaTelegram;
+  record: RedditTelegram;
   chatId: string;
 };

@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 import { makeAutoObservable } from "mobx";
 
-import { RedditMediaTelegram } from "../../../src/types/reddit";
+import { RedditTelegram } from "../../../src/types/reddit";
 import { ResponseListRecords, TypeNSFW } from "../types/nsfw";
 import { onChangeCheck, onChangeSelectValue } from "../types/functions";
 import { StateResponse } from "../types/common";
@@ -29,7 +29,7 @@ export class ModerateFridayStore {
   /** Выбранный канал */
   selectedChannel = "";
   /** Записи для модерации */
-  recordsToModerate: RedditMediaTelegram[] = [];
+  recordsToModerate: RedditTelegram[] = [];
   /** Статус доступности */
   state: StateResponse = "done";
   /** IDs то есть- urls выбранных записей */
@@ -184,7 +184,7 @@ export class ModerateFridayStore {
   /**
    * Отправка выбранных фото в телеграмм
    */
-  private *sendSelectedPhoto(records: RedditMediaTelegram[], name: string) {
+  private *sendSelectedPhoto(records: RedditTelegram[], name: string) {
     this.state = "pending";
     try {
       const response: Response = yield fetch("/api/botFriday/sendFriday", {
@@ -205,7 +205,7 @@ export class ModerateFridayStore {
   /**
    * Отправка выбранных видео в телеграмм
    */
-  private *sendSelectedVideo(records: RedditMediaTelegram[], name: string) {
+  private *sendSelectedVideo(records: RedditTelegram[], name: string) {
     this.state = "pending";
     const token = localStorage.getItem("token");
     // Собрать видеозаписи
@@ -234,7 +234,7 @@ export class ModerateFridayStore {
    * @param {Object} record запись из recordsToModerate
    * @returns {boolean}
    */
-  __filterSelectedRecords = (record: RedditMediaTelegram) =>
+  __filterSelectedRecords = (record: RedditTelegram) =>
     this.selectedRecords.some((r) => r === record.url);
 
   fetchModerateFailure = (error: unknown) => {
@@ -265,7 +265,7 @@ export class ModerateFridayStore {
   /**
    * Подготовка видео к отправке в телеграмм
    */
-  __mapVideoForTelegram = (record: RedditMediaTelegram) => {
+  __mapVideoForTelegram = (record: RedditTelegram) => {
     const { title = "", url = "", urlAudio = "" } = record;
     const baseInfo: RecordAsReddit = {
       is_video: true,

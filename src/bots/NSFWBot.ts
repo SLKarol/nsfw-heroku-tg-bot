@@ -1,12 +1,9 @@
-import {
-  CallbackQuery,
-  InlineKeyboardButton,
-  InputMedia,
-} from "node-telegram-bot-api";
+import { CallbackQuery, InlineKeyboardButton } from "node-telegram-bot-api";
 import delay from "@stanislavkarol/delay";
 
 import { BotCommandHandler } from "../types/telegramBot";
-import { IRedditApiRerod, RedditMediaTelegram } from "../types/reddit";
+import { RequestFriday } from "../types/fridayRouter";
+import { RedditTelegram } from "../types/reddit";
 
 import COMMANDS from "../const/commands";
 import type Reddit from "../lib/reddit";
@@ -14,7 +11,6 @@ import type ModelNsfw from "../lib/modelNsfw";
 
 import TelegramBot from "../lib/telegramBot";
 import { getHolydayMessage } from "../lib/isFriDay";
-import { RequestFriday } from "../types/fridayRouter";
 
 /**
  * Телеграм-бот для nsfw
@@ -87,10 +83,7 @@ class NSFWBot extends TelegramBot {
   ) => {
     // Отправка контента в телеграм
     try {
-      const records = await this.reddit.getNewRecords({
-        name: redditChannelName,
-        limit: maxCount,
-      });
+      const records = await this.reddit.getNewRecords(redditChannelName);
       if (!records.length) {
         return this.bot.sendMessage(
           chatId,
@@ -101,7 +94,7 @@ class NSFWBot extends TelegramBot {
         );
       }
       const fridayMessages = this.createAlbums(
-        records as IRedditApiRerod[],
+        records,
         this.reddit.mapRedditForTelegram
       );
       return this.sendFridayContent({
@@ -137,7 +130,7 @@ class NSFWBot extends TelegramBot {
     for (const group of fridayMessages) {
       promises.push(
         bot
-          .sendMediaGroup(chatId, group as InputMedia[])
+          .sendMediaGroup(chatId, group)
           .then(() => delay(700))
           .then(() => ({ success: true }))
           .catch((err) => {
@@ -211,18 +204,20 @@ ${e}`
   /**
    * Отправка видеоконтента
    * @param {Object} props
-   * @param {string|number} props.chatId ID чата
-   * @param {Array} props.video Видео
+   * @param props.chatId ID чата
+   * @param props.video Видео
    */
   async sendFridayContentVideo({
     chatId,
     video,
+    title,
   }: {
     chatId: string;
-    video: Partial<IRedditApiRerod>;
+    video: string;
+    title: string;
   }) {
-    return this.bot.sendVideo(chatId, video.media as any, {
-      caption: video.title,
+    return this.bot.sendVideo(chatId, video, {
+      caption: title,
     });
   }
 
@@ -322,8 +317,17 @@ ${e}`
       const channel = await this.db.getRandomChannel(true);
       channelName = channel.name;
     }
-    if (typeFriday === "picture")
-      return this.sendPictures(msg.chat.id.toString(), channelName);
+    if (typeFriday === "picture") {
+      const chatId = msg.chat.id.toString();
+      await this.bot.sendMessage(
+        chatId,
+        `Канал *${channelName}* представляет:`,
+        {
+          parse_mode: "Markdown",
+        }
+      );
+      return this.sendPictures(chatId, channelName);
+    }
   };
 
   /**

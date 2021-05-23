@@ -3,6 +3,11 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+const MONGO_CONNECT_URI =
+  process.env.NODE_ENV !== "development"
+    ? process.env.MONGO_CONNECT_URI
+    : process.env.MONGO_DEV_CONNECT_URI;
+
 var _connection: MongoClient | undefined;
 var _db: Db | undefined;
 
@@ -23,7 +28,7 @@ const getDbConnection = async (databaseName = "mongo2"): Promise<Db> => {
   if (_db) {
     return _db;
   }
-  const mongoClient = new MongoClient(process?.env?.MONGO_CONNECT_URI || "", {
+  const mongoClient = new MongoClient(MONGO_CONNECT_URI || "", {
     bufferMaxEntries: 0,
     useNewUrlParser: true,
     useUnifiedTopology: true,

@@ -1,6 +1,6 @@
 import { BotCommand } from "node-telegram-bot-api";
 
-import { IRedditApiRerod, RedditMediaTelegram } from "./reddit";
+import { RedditTelegram } from "./reddit";
 
 export interface CreateBot {
   /**
@@ -68,8 +68,3 @@ export type HandlerExecCommand = (
   chatId: number | string,
   parsedMessage: ParsedCommandText
 ) => Promise<any>;
-
-/**
- * Функция-мап, которая преобразует изображения в формат телеграм-медиа
- */
-export type MapAlbumFunction = (reddit: IRedditApiRerod) => RedditMediaTelegram;

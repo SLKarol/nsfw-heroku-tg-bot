@@ -1,12 +1,11 @@
 import NodeTelegramBot from "node-telegram-bot-api";
 
-import { IRedditApiRerod, RedditMediaTelegram } from "../types/reddit";
+import { RedditTelegram, MapPhotoAlbumFunction } from "../types/reddit";
 import {
   CreateBot,
   CustomBotCommand,
   ParsedCommandText,
   BotCommandHandler,
-  MapAlbumFunction,
 } from "../types/telegramBot";
 
 import ManageSubscribe from "./manageSubscribe";
@@ -119,13 +118,13 @@ class TelegramBot {
   /**
    * Группировка изображений для создания альбомов, пригодных для отправки в телеграм.
    * По сути своей список изображений разбивается на 10 частей, маппится к телеграм-альбому
-   * @param {Array<IRedditApiRerod>} friDay Массив изображений/видео
+   * @param friDay Массив изображений/видео
    * @param {Function} callbackMap Функция-мап, которая преобразует изображения в формат телеграм-медиа
    * @returns {Array<[]>} Медиа-альбомы
    */
-  createAlbums(friDay: IRedditApiRerod[], callbackMap: MapAlbumFunction) {
+  createAlbums(friDay: RedditTelegram[], callbackMap: MapPhotoAlbumFunction) {
     //массив, в который будет выведен результат.
-    let fridayMessages: RedditMediaTelegram[][] = [];
+    let fridayMessages: NodeTelegramBot.InputMediaPhoto[][] = [];
     const size = 10;
     // Получить массив из частей по size штук
     for (let i = 0; i < Math.ceil(friDay.length / size); i++) {

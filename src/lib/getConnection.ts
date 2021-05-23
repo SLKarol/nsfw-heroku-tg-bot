@@ -1,7 +1,15 @@
 import { createConnection, Connection } from "mongoose";
+import * as dotenv from "dotenv";
 
 import { SubscribeSchema } from "../schema/subscribe";
 import { UserSchema } from "../schema/tgUsers";
+
+dotenv.config();
+
+const MONGO_CONNECT_URI =
+  process.env.NODE_ENV !== "development"
+    ? process.env.MONGO_CONNECT_URI
+    : process.env.MONGO_DEV_CONNECT_URI;
 
 let conn: Connection | null;
 
@@ -12,7 +20,7 @@ let conn: Connection | null;
  */
 const getConnection = async () => {
   if (conn == null) {
-    conn = createConnection(process.env.MONGO_CONNECT_URI || "", {
+    conn = createConnection(MONGO_CONNECT_URI || "", {
       bufferCommands: false,
       bufferMaxEntries: 0,
       useNewUrlParser: true,

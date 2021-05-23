@@ -6,7 +6,6 @@ import express, {
   ErrorRequestHandler,
 } from "express";
 import cors from "cors";
-import asyncHandler from "express-async-handler";
 import * as dotenv from "dotenv";
 
 import Reddit from "./lib/reddit";

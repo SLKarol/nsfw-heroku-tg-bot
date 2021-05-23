@@ -5,7 +5,7 @@ import express from "express";
 import { body, validationResult } from "express-validator";
 
 import BASE_URL from "../const/baseUrl";
-import { IRedditApiRerod, RedditMediaTelegram } from "../types/reddit";
+
 import { RecordBor } from "../types/bor";
 import type NSFWBot from "../bots/NSFWBot";
 import {
@@ -15,6 +15,7 @@ import {
   RequestFriday,
   RequestSendFriday,
 } from "../types/fridayRouter";
+import { RedditTelegram } from "../types/reddit";
 
 import AppBotRouter from "../lib/appBotRouter";
 import { getHolydayMessage, isFriDay } from "../lib/isFriDay";
@@ -80,14 +81,14 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
       const prChatIds = this.getChatForMailing();
       // Получить список изображений
       const prFridayImages = !records.length
-        ? this.bot.reddit.getNewRecords({ limit: 20, name: infoChannel.name })
-        : new Promise<RedditMediaTelegram[]>((resolve) => resolve(records));
+        ? this.bot.reddit.getNewRecords(infoChannel.name)
+        : new Promise<RedditTelegram[]>((resolve) => resolve(records));
       const [chatIds, fridayImages] = await Promise.all([
         prChatIds,
         prFridayImages,
       ]);
       const fridayMessages = this.bot.createAlbums(
-        fridayImages as IRedditApiRerod[],
+        fridayImages,
         this.bot.reddit.mapRedditForTelegram
       );
       // Получить ссылку на метод, который отправляет альбомы
@@ -215,16 +216,12 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
    * @param {boolean} params.filterContent - Фильтровать контент?
    * @param {Response} res
    */
-  getNSFW = (params: Partial<GetNSFWParams>, res: express.Response) => {
+  private getNSFW = (params: Partial<GetNSFWParams>, res: express.Response) => {
     const { limit = 20, name = "nsfw", filterContent = false } = params;
     // Определиться с количеством записей
     const count = +limit;
     return this.bot.reddit
-      .getNewRecords({
-        limit: count === NaN ? 20 : count > 50 ? 50 : count,
-        name,
-        filterContent,
-      })
+      .getNewRecords(name, count === NaN ? 20 : count > 50 ? 50 : count)
       .then((records) => {
         return res.status(200).json({ records, name });
       });
@@ -243,11 +240,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
     // Определиться с количеством записей
     const count = +limit;
     return this.bot.reddit
-      .getNewVideoRecords({
-        limit: count === NaN ? 20 : count > 50 ? 50 : count,
-        name,
-        filterContent,
-      })
+      .getNewVideoRecords(name, count === NaN ? 20 : count > 50 ? 50 : count)
       .then((records) => {
         res.status(200).json({ records, name });
       });
@@ -460,16 +453,17 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
   );
 
   /**
-   * Отправка одного видео в телеграмм-контакт
+   * Отправка одного(!) видео в телеграмм-контакт
    */
   postVideo = (
     req: express.Request<{}, {}, PostVideo>,
     res: express.Response
   ) => {
     const { record, chatId } = req.body;
-    const videoRecord = this.bot.reddit.mapVideoRedditForTelegram(record);
+    const { url = "", title = "" } = record;
+    const video = this.bot.reddit.prepareVideoForTelegram(url);
     this.bot
-      .sendFridayContentVideo({ chatId, video: videoRecord })
+      .sendFridayContentVideo({ chatId, video, title })
       .then(() => res.status(200).json({ success: true }))
       .catch((error) =>
         res.status(500).json({ success: false, message: error })
@@ -477,7 +471,7 @@ class FridayRouter extends AppBotRouter<NSFWBot> {
   };
 
   /**
-   * Отправка решения
+   * Рассылка, в зависимости от дня недели (и праздника)
    */
   fridayMailing = asyncHandler(async (req, res) => {
     const isDate = await isFriDay();

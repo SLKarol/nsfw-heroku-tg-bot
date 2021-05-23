@@ -1,4 +1,4 @@
-import { RedditMediaTelegram } from "../../../src/types/reddit";
+import { RedditTelegram } from "../../../src/types/reddit";
 import { NSFWChannel, TypeNSFW } from "../types/nsfw";
 
 import { isResponseError } from "./responseError";
@@ -19,25 +19,11 @@ export async function sendNSFW(type: TypeNSFW) {
 }
 
 /**
- * Получить новые записи
- * @param {number} limit Количество новых записей
- */
-export function getNSFW(limit = 20) {
-  return fetch("/api/botFriday/getNSFW", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ limit }),
-  }).then((re) => re.json());
-}
-
-/**
  * Отправить выбранные пятничные картинки
  * @param {Array} records
  * @returns {Promise}
  */
-export function sendFriday(records: RedditMediaTelegram[]) {
+export function sendFriday(records: RedditTelegram[]) {
   return fetch("/api/botFriday/sendFriday", {
     method: "POST",
     headers: {
