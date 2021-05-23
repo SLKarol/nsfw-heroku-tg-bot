@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 import { makeAutoObservable } from "mobx";
 
-import { RedditTelegram } from "../../../src/types/reddit";
+import { RedditTelegram } from "../types/reddit";
 import { ResponseListRecords, TypeNSFW } from "../types/nsfw";
 import { onChangeCheck, onChangeSelectValue } from "../types/functions";
 import { StateResponse } from "../types/common";
@@ -255,10 +255,6 @@ export class ModerateFridayStore {
       this.error = null;
       return;
     }
-    // if (message && typeof message === "object" && "message" in message) {
-    //   this.error = message;
-    //   return;
-    // }
     this.error = JSON.stringify(message);
   };
 

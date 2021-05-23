@@ -1,4 +1,4 @@
-import { RedditTelegram } from "../../../src/types/reddit";
+import { RedditTelegram } from "../types/reddit";
 import { NSFWChannel, TypeNSFW } from "../types/nsfw";
 
 import { isResponseError } from "./responseError";

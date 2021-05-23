@@ -1,5 +1,5 @@
-import { TChannel } from "../../../src/types/channel";
-import { RedditTelegram } from "../../../src/types/reddit";
+import { TChannel } from "./channel";
+import { RedditTelegram } from "./reddit";
 
 export type TypeNSFW = "video" | "photo";
 
