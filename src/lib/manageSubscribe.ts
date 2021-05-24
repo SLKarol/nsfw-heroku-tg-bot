@@ -1,4 +1,3 @@
-import { Model, Document } from "mongoose";
 import OPTIONS_UPDATE from "../const/optionsUpdateBD";
 import { ISubscribe } from "../schema/subscribe";
 
@@ -31,9 +30,8 @@ class ManageSubscribe {
    * @returns {Promise}
    */
   async subscribe(chatId: string) {
-    // todo: Добавить проверку на chatId!==undefined
     const cnn = await getConnection();
-    const Subscribe = cnn.model<ISubscribe>("Subscribe");
+    const Subscribe = cnn.model<ISubscribe>("Subscribes");
     const query = { chatId, typeSubscribe: this.nameSubscribe };
     return await Subscribe.findOneAndUpdate(query, query, OPTIONS_UPDATE);
   }
@@ -44,9 +42,8 @@ class ManageSubscribe {
    * @returns {Promise}
    */
   async unsubscribe(chatId: string) {
-    // todo: Добавить проверку на chatId!==undefined
     const cnn = await getConnection();
-    const Subscribe = cnn.model<ISubscribe>("Subscribe");
+    const Subscribe = cnn.model<ISubscribe>("Subscribes");
     return await Subscribe.deleteMany({
       chatId,
       typeSubscribe: this.nameSubscribe,
@@ -59,7 +56,7 @@ class ManageSubscribe {
    */
   async getChatIdsForMailing() {
     const conn = await getConnection();
-    const Subscribe = conn.model<ISubscribe>("Subscribe");
+    const Subscribe = conn.model<ISubscribe>("Subscribes");
     // Собрать все задания, которые нужно выполнить
     const tasks = (await Subscribe.find({
       typeSubscribe: this.nameSubscribe,

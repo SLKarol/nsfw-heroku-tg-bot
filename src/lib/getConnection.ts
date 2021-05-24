@@ -28,7 +28,7 @@ const getConnection = async () => {
       useFindAndModify: false,
     });
     await conn;
-    conn.model("Subscribe", SubscribeSchema);
+    conn.model("Subscribes", SubscribeSchema);
     conn.model("TgUsers", UserSchema);
   }
   return conn;
