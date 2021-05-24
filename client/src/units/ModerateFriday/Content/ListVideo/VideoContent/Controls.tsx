@@ -3,6 +3,7 @@ import Button from "@material-ui/core/Button";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import StopIcon from "@material-ui/icons/Stop";
 import CloudDownloadIcon from "@material-ui/icons/CloudDownload";
+import VideoLibraryIcon from "@material-ui/icons/VideoLibrary";
 import { makeStyles } from "@material-ui/core/styles";
 
 import { ClickHandler } from "../../../../../types/functions";
@@ -18,9 +19,16 @@ type Props = {
   onStop: ClickHandler;
   onDownload: ClickHandler;
   busy: boolean;
+  permalink: string;
 };
 
-const Controls: FC<Props> = ({ onPlay, onStop, onDownload, busy }) => {
+const Controls: FC<Props> = ({
+  onPlay,
+  onStop,
+  onDownload,
+  busy,
+  permalink,
+}) => {
   const classes = useStyles();
   return (
     <div>
@@ -51,6 +59,17 @@ const Controls: FC<Props> = ({ onPlay, onStop, onDownload, busy }) => {
         disabled={busy}
       >
         Download
+      </Button>
+      <Button
+        variant="contained"
+        color="default"
+        className={classes.button}
+        startIcon={<VideoLibraryIcon />}
+        disabled={busy}
+        href={`https://www.reddit.com${permalink}`}
+        target="_blank"
+      >
+        Original
       </Button>
     </div>
   );

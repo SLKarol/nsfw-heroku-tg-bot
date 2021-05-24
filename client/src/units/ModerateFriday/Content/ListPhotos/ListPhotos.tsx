@@ -11,13 +11,14 @@ const ListPhotos = () => {
     <>
       {list.map((record) => {
         const {
+          permalink,
           url = "",
           title = "",
           checked,
           correctImageDimension = false,
         } = record;
         return (
-          <figure key={url}>
+          <figure key={permalink}>
             <Photo url={url} title={title} />
             <CheckMaterial
               title={title}

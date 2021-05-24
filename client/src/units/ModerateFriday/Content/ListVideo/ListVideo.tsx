@@ -11,11 +11,16 @@ const ListVideo = () => {
   return (
     <>
       {list.map((record) => {
-        const { url = "", title = "", checked, urlAudio } = record;
+        const { url = "", title = "", checked, urlAudio, permalink } = record;
         return (
-          <Grid key={url} item xs={12} sm={6} xl={4} md={4}>
+          <Grid key={permalink} item xs={12} sm={6} xl={4} md={4}>
             <figure>
-              <VideoContent url={url} urlAudio={urlAudio} title={title} />
+              <VideoContent
+                url={url}
+                urlAudio={urlAudio}
+                title={title}
+                permalink={permalink}
+              />
               <CheckMaterial url={url} title={title} checked={checked} />
             </figure>
           </Grid>

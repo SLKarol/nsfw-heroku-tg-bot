@@ -40,8 +40,8 @@ class Reddit {
    */
   private requestNewEntries = async ({ limit = 20, name = "nsfw" }) => {
     const re = (await this.client.getNew(name, { limit })).map((record) => {
-      const { url, media, title, preview } = record;
-      return { url, media, title, preview };
+      const { url, media, title, preview, permalink } = record;
+      return { url, media, title, preview, permalink };
     });
     return re;
   };
@@ -84,7 +84,7 @@ class Reddit {
    */
   getNewVideoRecords = async (name: string, limit = 20) => {
     const recordsReddit = await this.requestNewEntries({ name, limit });
-    let promises = recordsReddit.reduce(this.getVideoUrl, []);
+    const promises = recordsReddit.reduce(this.getVideoUrl, []);
     const arrayRedditMedia = await Promise.all(promises);
     const workRecords = arrayRedditMedia.filter((i) => i !== null && i.url);
     return workRecords;
@@ -103,7 +103,7 @@ class Reddit {
     listPromises: Promise<Partial<RedditTelegram> | null>[],
     record: Partial<Submission>
   ) => {
-    const { url = "", title = "", media, preview } = record;
+    const { url = "", title = "", media, preview, permalink } = record;
     // Это gifv?
     if (!!url.match(/.(gifv)$/i)) {
       listPromises.push(this.getGifvVideo(record));
@@ -120,13 +120,17 @@ class Reddit {
       // Удалось получить ссылку на mp4?
       if (recordUrl.endsWith(".mp4")) {
         listPromises.push(
-          new Promise((resolve) => resolve({ title, url: recordUrl }))
+          new Promise((resolve) =>
+            resolve({ title, url: recordUrl, permalink })
+          )
         );
         return listPromises;
       }
       // Если есть ссылка, то распарсить из неё video
       if (recordUrl) {
-        listPromises.push(this.getVideoFromHtml(recordUrl, title));
+        listPromises.push(
+          this.getVideoFromHtml({ url: recordUrl, permalink, title })
+        );
       }
       return listPromises;
     }
@@ -141,7 +145,7 @@ class Reddit {
       const urlAudio = urlVideo.replace(fileName, "DASH_audio.mp4");
       listPromises.push(
         new Promise((resolve) =>
-          resolve({ url: urlVideo, title, urlAudio, preview })
+          resolve({ url: urlVideo, title, urlAudio, preview, permalink })
         )
       );
 
@@ -195,12 +199,14 @@ class Reddit {
     url = "",
     title,
     preview,
+    permalink,
   }: Partial<Submission>) => {
     return new Promise<Partial<Submission>>((resolve) =>
       resolve({
         url: url.replace(".gifv", ".mp4"),
         title,
         preview,
+        permalink,
       })
     );
   };
@@ -208,7 +214,8 @@ class Reddit {
   /**
    * Получить html-страницу и взять из неё исходник видеозаписи
    */
-  private getVideoFromHtml = (url: string, title: string) => {
+  private getVideoFromHtml = (record: Partial<Submission>) => {
+    const { url = "", title = "", permalink = "" } = record;
     return new Promise<Partial<Submission> | null>((resolve) =>
       fetch(url).then((response) =>
         response.text().then((htmlContent) => {
@@ -217,7 +224,7 @@ class Reddit {
           if (source !== null) {
             const { src, type } = source.rawAttributes;
             if (type === "video/mp4") {
-              resolve({ url: src, title });
+              resolve({ url: src, title, permalink });
             }
           }
           resolve(null);

@@ -20,9 +20,10 @@ const styles = (theme: Theme) => ({
 });
 
 interface Props extends WithStyles<typeof styles> {
+  title: string;
+  permalink: string;
   url?: string;
   urlAudio?: string;
-  title: string;
 }
 
 class VideoContent extends PureComponent<Props, { download: boolean }> {
@@ -94,7 +95,7 @@ class VideoContent extends PureComponent<Props, { download: boolean }> {
   };
 
   render() {
-    const { classes, urlAudio, url } = this.props;
+    const { classes, urlAudio, url, permalink } = this.props;
     const { download } = this.state;
     return (
       <div>
@@ -115,6 +116,7 @@ class VideoContent extends PureComponent<Props, { download: boolean }> {
           onStop={this.onStop}
           onDownload={this.onDownload}
           busy={download}
+          permalink={permalink}
         />
         <a href="#" ref={this.linkRef} className={classes.hideLink}>
           Ссылка
