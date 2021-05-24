@@ -25,5 +25,3 @@ MONGO_CONNECT_URI="MongoConnectUri"
 TOKEN_JWT="Секретная фраза для генерации токенов на авторизацию"
 
 REDDIT\_...настройки для подключения к Reddit и MONGO_CONNECT_URI - подключение к БД Mongo для хранения настроек подписки.
-
-_todo_ переехать от модульного css
