@@ -22,6 +22,8 @@ REDDIT_API_SECRET="RedditApiSecret"
 
 MONGO_CONNECT_URI="MongoConnectUri"
 
+MONGO_DEV_CONNECT_URI="Подключение к БД разработчика"
+
 TOKEN_JWT="Секретная фраза для генерации токенов на авторизацию"
 
 REDDIT\_...настройки для подключения к Reddit и MONGO_CONNECT_URI - подключение к БД Mongo для хранения настроек подписки.
