@@ -7,9 +7,9 @@ import { onChangeCheck, onChangeSelectValue } from "../types/functions";
 import { StateResponse } from "../types/common";
 
 import { ChannelsStore } from "../mobx/channels";
-import { downloadMedia } from "../lib/media";
 import { ResponseError } from "../lib/responseError";
 import randomItem from "../lib/randomItem";
+import { downloadMedia } from "../lib/media";
 
 //! Исправить на динамичный выбор
 type WritableStringKeys = "typeMailing" | "selectedChannel";
@@ -210,20 +210,36 @@ export class ModerateFridayStore {
     const token = localStorage.getItem("token");
     // Собрать видеозаписи
     try {
-      const recordsToPublish: RecordAsReddit[] = yield Promise.all(
+      const readedVideos: any[] = yield Promise.allSettled(
         records.map(this.__mapVideoForTelegram)
       );
-      const response: Response = yield fetch("/api/botFriday/sendFridayVideo", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const recordsToPublish = readedVideos.reduce(
+        (acc: RecordAsReddit[], reduceValue) => {
+          if (reduceValue.status === "fulfilled") {
+            acc.push(reduceValue.value);
+          }
+          return acc;
         },
-        body: JSON.stringify({ records: recordsToPublish, channel: name }),
-      });
-      this.state = "success";
-      const data: ResponseError = yield response.json();
-      this.analyzeResponse(data);
+        []
+      );
+      if (recordsToPublish.length) {
+        const response: Response = yield fetch(
+          "/api/botFriday/sendFridayVideo",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ records: recordsToPublish, channel: name }),
+          }
+        );
+        const data: ResponseError = yield response.json();
+        this.analyzeResponse(data);
+      } else {
+        this.state = "error";
+        this.error = "Не удалось скачать и отправить видео";
+      }
     } catch (err) {
       this.fetchModerateFailure(err);
     }
