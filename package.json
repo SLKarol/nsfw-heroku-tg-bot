@@ -15,9 +15,9 @@
     "express-validator": "^6.10.1",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.8",
-    "mongoose": "^5.12.10",
+    "mongoose": "^5.12.11",
     "node-fetch": "^2.6.1",
-    "node-html-parser": "^3.3.3",
+    "node-html-parser": "^3.3.4",
     "node-telegram-bot-api": "^0.53.0",
     "probe-image-size": "^7.1.0",
     "snoowrap": "^1.23.0"
@@ -29,7 +29,7 @@
     "@types/jsonwebtoken": "^8.5.1",
     "@types/mocha": "^8.2.2",
     "@types/mongoose": "^5.10.5",
-    "@types/node": "^15.6.0",
+    "@types/node": "^15.6.1",
     "@types/node-fetch": "^2.5.10",
     "@types/node-telegram-bot-api": "^0.51.1",
     "@types/probe-image-size": "^7.0.0",
@@ -49,7 +49,16 @@
     "test": "mocha",
     "test:manual": "cross-env NODE_ENV=development nodemon -r dotenv/config --watch 'src/**/*.ts' --exec 'ts-node --files' src/test/manual/reddit2.ts"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "telegram",
+    "bot",
+    "node",
+    "express",
+    "react",
+    "mobx",
+    "typescript",
+    "nsfw"
+  ],
+  "author": "Stanislav Karol",
   "license": "ISC"
 }
