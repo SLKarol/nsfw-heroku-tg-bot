@@ -15,6 +15,7 @@ import ModelNsfw from "./lib/modelNsfw";
 import authMiddleware from "./middleware/auth";
 import authRoutes from "./routes/auth";
 import getBashContent from "./controllers/bash";
+import filesRoutes from "./routes/files";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -39,6 +40,7 @@ const fridayRouer = new FridayRouter(nsfwBot, "/api/botFriday");
 app.use("/api/botFriday", fridayRouer.router);
 app.use("/api/auth", authRoutes);
 app.get("/api/bashOrg", getBashContent);
+app.use("/api/files", filesRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static("client/build"));

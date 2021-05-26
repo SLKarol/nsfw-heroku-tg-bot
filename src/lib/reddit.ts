@@ -1,6 +1,6 @@
 import Snoowrap, { Submission } from "snoowrap";
 import { parse } from "node-html-parser";
-import { InputMediaPhoto, InputMediaVideo } from "node-telegram-bot-api";
+import { InputMediaPhoto } from "node-telegram-bot-api";
 import fetch from "node-fetch";
 import * as dotenv from "dotenv";
 
