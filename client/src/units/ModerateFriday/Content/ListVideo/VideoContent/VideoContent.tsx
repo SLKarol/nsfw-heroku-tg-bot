@@ -80,15 +80,21 @@ class VideoContent extends PureComponent<Props, { download: boolean }> {
         ?.trim()}`;
 
       downloadMedia(url, urlAudio).then((personUint8Array) => {
-        const blob = new Blob([personUint8Array as any]);
-        const href = window.URL.createObjectURL(blob);
-        const a = this.linkRef.current;
-        if (a !== null) {
-          a.download = fileName;
-          a.href = href;
-          a.click();
-          a.href = "";
+        let href = personUint8Array;
+        if (typeof href === "object") {
+          const blob = new Blob([personUint8Array as any]);
+          href = typeof window.URL.createObjectURL(blob);
+          const a = this.linkRef.current;
+          if (a !== null) {
+            a.download = fileName;
+            a.href = href;
+            a.click();
+            a.href = "";
+          }
+        } else {
+          window.open(href, "_blank");
         }
+
         this.setState({ download: false });
       });
     });

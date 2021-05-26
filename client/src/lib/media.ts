@@ -11,7 +11,7 @@ export async function downloadMedia(
   audioUrl: string | null = null
 ) {
   if (audioUrl === null) {
-    return fetchFile(videoUrl);
+    return videoUrl;
   }
   return mergeAudioVideo(videoUrl, audioUrl);
 }
