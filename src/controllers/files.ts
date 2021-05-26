@@ -30,7 +30,9 @@ export const getRedditVideo = asyncHandler(async (req, res, next) => {
     // request("https://v.redd.it/7cd3dd9dbc171/DASH_audio.mp4").pipe(
     //   fs.createWriteStream("DASH_audio.mp4")
     // );
-
+    if (!fs.existsSync(path.join(__dirname, "../tmp"))) {
+      fs.mkdirSync(path.join(__dirname, "../tmp"));
+    }
     await Promise.all([
       fetch("https://v.redd.it/7cd3dd9dbc171/DASH_480.mp4")
         .then((response) => response.buffer())
