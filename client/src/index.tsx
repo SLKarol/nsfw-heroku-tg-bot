@@ -9,6 +9,7 @@ import Anecdotes from "./pages/Anecdotes/";
 import ForceMail from "./pages/ForceMail/";
 import ModerateFriday from "./pages/ModerateFriday/";
 import Channels from "./pages/Channels/";
+import PrivateRoute from "./components/PrivateRoute";
 
 import reportWebVitals from "./reportWebVitals";
 
@@ -18,10 +19,18 @@ ReactDOM.render(
       <Switch>
         <Route exact path="/" component={App} />
         <Route path="/signin" component={SignIn} />
-        <Route path="/anecdotes" component={Anecdotes} />
-        <Route path="/forcemail" component={ForceMail} />
-        <Route path="/moderate" component={ModerateFriday} />
-        <Route path="/channels" component={Channels} />
+        <PrivateRoute path="/anecdotes">
+          <Anecdotes />
+        </PrivateRoute>
+        <PrivateRoute path="/forcemail">
+          <ForceMail />
+        </PrivateRoute>
+        <PrivateRoute path="/moderate">
+          <ModerateFriday />
+        </PrivateRoute>
+        <PrivateRoute path="/channels">
+          <Channels />
+        </PrivateRoute>
       </Switch>
     </BrowserRouter>
   </React.StrictMode>,
