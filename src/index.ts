@@ -15,7 +15,8 @@ import ModelNsfw from "./lib/modelNsfw";
 import authMiddleware from "./middleware/auth";
 import authRoutes from "./routes/auth";
 import getBashContent from "./controllers/bash";
-import filesRoutes from "./routes/files";
+import FridayController from "./controllers/friday";
+import filesRoutes from "./routes/files"; //--- В разработке
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +29,7 @@ const app = express();
 const db = new ModelNsfw();
 const reddit = new Reddit();
 const nsfwBot = new NSFWBot("" + TOKEN, reddit, db);
+const fridayController = new FridayController(nsfwBot);
 
 // CORS
 app.use(cors());
@@ -36,7 +38,11 @@ app.use(express.urlencoded({ extended: true, limit: "350mb" })); // for parsing 
 // Звено для авторизации
 app.use(authMiddleware);
 
-const fridayRouer = new FridayRouter(nsfwBot, "/api/botFriday");
+const fridayRouer = new FridayRouter(
+  nsfwBot,
+  "/api/botFriday",
+  fridayController
+);
 app.use("/api/botFriday", fridayRouer.router);
 app.use("/api/auth", authRoutes);
 app.get("/api/bashOrg", getBashContent);
