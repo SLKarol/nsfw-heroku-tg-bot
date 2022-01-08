@@ -39,7 +39,7 @@ export const getRedditVideo = asyncHandler(async (req, res, next) => {
         res.status(500).json({ error: err.message });
         console.log("an error happened: " + err.message);
       });
-  } catch (err) {
+  } catch (err: any) {
     res.status(500).json({ error: err.toString() });
   }
 });

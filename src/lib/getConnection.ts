@@ -22,10 +22,6 @@ const getConnection = async () => {
   if (conn == null) {
     conn = createConnection(MONGO_CONNECT_URI || "", {
       bufferCommands: false,
-      bufferMaxEntries: 0,
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useFindAndModify: false,
     });
     await conn;
     conn.model("Subscribes", SubscribeSchema);

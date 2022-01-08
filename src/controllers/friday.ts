@@ -90,12 +90,14 @@ export default class FridayController extends AppBotController<NSFWBot> {
       const { records = [], channel = "" } = req.body;
       // Если не прислали видео, значит на этом закончена работа
       if (!records.length) {
-        return res.status(200).json({ success: true });
+        res.status(200).json({ success: true });
+        return;
       }
       // Получить ID Чатов для рассылки
       const chatIds = await this.getChatForMailing();
       if (!chatIds.length) {
-        return res.status(200).json({ success: true });
+        res.status(200).json({ success: true });
+        return;
       }
       // Получить Название канала
       const infoChannel = await this.bot.getChannelInfo(channel);
@@ -117,6 +119,7 @@ export default class FridayController extends AppBotController<NSFWBot> {
           }),
         });
       }
+
       res.status(200).json({ success: true });
     }
   );
@@ -223,7 +226,7 @@ export default class FridayController extends AppBotController<NSFWBot> {
     return this.bot.reddit
       .getNewRecords(name, count === NaN ? 20 : count > 50 ? 50 : count)
       .then((records) => {
-        return res.status(200).json({ records, name });
+        res.status(200).json({ records, name });
       });
   };
 
@@ -269,12 +272,11 @@ export default class FridayController extends AppBotController<NSFWBot> {
    */
   getListChannels = asyncHandler(async (req, res) => {
     if (!req.isAuth) {
-      return res
-        .status(401)
-        .json({ message: "Ошибка авторизации", success: false });
+      res.status(401).json({ message: "Ошибка авторизации", success: false });
+      return;
     }
     const channels = await this.bot.db.getListChannels();
-    return res.status(200).json({ channels });
+    res.status(200).json({ channels });
   });
 
   /**
