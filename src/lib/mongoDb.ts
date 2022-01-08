@@ -28,7 +28,7 @@ const getDbConnection = async (databaseName = "mongo2"): Promise<Db> => {
   if (_db) {
     return _db;
   }
-  const mongoClient = new MongoClient(MONGO_CONNECT_URI || "", {});
+  const mongoClient = new MongoClient(MONGO_CONNECT_URI || "");
   _connection = await mongoClient.connect();
   _db = _connection.db(databaseName);
   return _db;

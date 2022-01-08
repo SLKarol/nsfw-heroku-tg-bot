@@ -5,20 +5,23 @@ import delay from "@stanislavkarol/delay";
 import { validationResult } from "express-validator";
 
 import BASE_URL from "../const/baseUrl";
+import HOLYDAYS from "../tmp/holidays.json";
 
 import type NSFWBot from "../bots/NSFWBot";
-import {
+import type {
   GetNSFWParams,
   PostVideo,
   RequestFriday,
   RequestSendFriday,
 } from "../types/fridayRouter";
-import { RedditTelegram } from "../types/reddit";
-import { RecordBor } from "../types/bor";
-import { TChannel } from "../types/channel";
+import type { RedditTelegram } from "../types/reddit";
+import type { RecordBor } from "../types/bor";
+import type { TChannel } from "../types/channel";
 import AppBotController from "../lib/appBotController";
 
 import { getHolydayMessage, isFriDay } from "../lib/isFriDay";
+import getConnection from "../lib/getConnection";
+import { IHolyday } from "../schema/holyday";
 
 export default class FridayController extends AppBotController<NSFWBot> {
   constructor(bot: NSFWBot) {
@@ -426,5 +429,21 @@ export default class FridayController extends AppBotController<NSFWBot> {
       });
     }
     res.status(200).json({ status });
+  });
+
+  import = asyncHandler(async (req, res) => {
+    const db = await getConnection();
+
+    const promises = HOLYDAYS.map(({ day, holidays, month }) =>
+      db.collection("holidays", {}).insertOne({
+        day,
+        month,
+        holidays: [...new Set(holidays)],
+      })
+    );
+
+    await Promise.all(promises);
+
+    res.status(200).json({ status: promises.length });
   });
 }

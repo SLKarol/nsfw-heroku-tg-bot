@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 
 import { SubscribeSchema } from "../schema/subscribe";
 import { UserSchema } from "../schema/tgUsers";
+import HolydaySchema from "../schema/holyday";
 
 dotenv.config();
 
@@ -20,12 +21,11 @@ let conn: Connection | null;
  */
 const getConnection = async () => {
   if (conn == null) {
-    conn = createConnection(MONGO_CONNECT_URI || "", {
-      bufferCommands: false,
-    });
+    conn = createConnection(MONGO_CONNECT_URI || "");
     await conn;
     conn.model("Subscribes", SubscribeSchema);
     conn.model("TgUsers", UserSchema);
+    conn.model("Holydays", HolydaySchema);
   }
   return conn;
 };
