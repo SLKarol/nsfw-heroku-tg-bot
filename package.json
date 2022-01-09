@@ -6,7 +6,6 @@
   "dependencies": {
     "@stanislavkarol/delay": "^1.0.3",
     "@stanislavkarol/get-bash-im-rss": "^1.1.21",
-    "@stanislavkarol/get-holidays": "0.2.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",

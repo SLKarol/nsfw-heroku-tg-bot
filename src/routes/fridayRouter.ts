@@ -41,7 +41,5 @@ export default class FridayRouter extends AppBotRouter<NSFWBot> {
     this.router.post("/postListVideo", controller.postListVideo);
     this.router.post("/postVideo", controller.postVideo);
     this.router.post("/fridayMailing", controller.fridayMailing);
-    // ! For import
-    this.router.post("/import", controller.import);
   }
 }

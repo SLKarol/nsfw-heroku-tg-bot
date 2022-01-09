@@ -3,7 +3,7 @@ import * as dotenv from "dotenv";
 
 import { SubscribeSchema } from "../schema/subscribe";
 import { UserSchema } from "../schema/tgUsers";
-import HolydaySchema from "../schema/holyday";
+import HolidaySchema from "../schema/holiday";
 
 dotenv.config();
 
@@ -25,7 +25,7 @@ const getConnection = async () => {
     await conn;
     conn.model("Subscribes", SubscribeSchema);
     conn.model("TgUsers", UserSchema);
-    conn.model("Holydays", HolydaySchema);
+    conn.model("Holidays", HolidaySchema);
   }
   return conn;
 };

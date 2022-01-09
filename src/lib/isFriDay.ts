@@ -1,5 +1,7 @@
 import fetch from "node-fetch";
-import getHolydays from "@stanislavkarol/get-holidays";
+
+import getConnection from "./getConnection";
+import type { IHoliday } from "../schema/holiday";
 
 import randomItem from "./randomItem";
 
@@ -40,14 +42,28 @@ export async function isFriDay() {
 /**
  * Генерация текста о текущем празднике
  */
-export async function getHolydayMessage() {
+export async function getHolidayMessage() {
+  const now = new Date();
+  const day = now.getDate();
+  const month = 1 + now.getMonth();
   try {
-    const list = await getHolydays();
-    if (list.length) {
-      return `Я смотрю, вы тут празднуете ${randomItem(list)}`;
+    const conn = await getConnection();
+    const data = await conn.model<IHoliday>("Holidays").findOne(
+      {
+        month,
+        day,
+      },
+      {
+        holidays: 1,
+      }
+    );
+
+    if (data && data.holidays.length) {
+      return `Я смотрю, вы тут празднуете ${randomItem(data.holidays)}`;
     }
     return "";
   } catch (e) {
+    console.error(e);
     return "";
   }
 }

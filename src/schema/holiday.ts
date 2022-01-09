@@ -1,12 +1,12 @@
 import { Schema, Document } from "mongoose";
 
-export interface IHolyday extends Document {
+export interface IHoliday extends Document {
   month: number;
   day: number;
   holidays: string[];
 }
 
-export const HolydaySchema = new Schema({
+export const HolidaySchema = new Schema({
   month: {
     type: Number,
     required: true,
@@ -21,4 +21,4 @@ export const HolydaySchema = new Schema({
   },
 });
 
-export default HolydaySchema;
+export default HolidaySchema;

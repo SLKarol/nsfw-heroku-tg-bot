@@ -5,7 +5,6 @@ import delay from "@stanislavkarol/delay";
 import { validationResult } from "express-validator";
 
 import BASE_URL from "../const/baseUrl";
-import HOLYDAYS from "../tmp/holidays.json";
 
 import type NSFWBot from "../bots/NSFWBot";
 import type {
@@ -19,9 +18,7 @@ import type { RecordBor } from "../types/bor";
 import type { TChannel } from "../types/channel";
 import AppBotController from "../lib/appBotController";
 
-import { getHolydayMessage, isFriDay } from "../lib/isFriDay";
-import getConnection from "../lib/getConnection";
-import { IHolyday } from "../schema/holyday";
+import { getHolidayMessage, isFriDay } from "../lib/isFriDay";
 
 export default class FridayController extends AppBotController<NSFWBot> {
   constructor(bot: NSFWBot) {
@@ -41,7 +38,7 @@ export default class FridayController extends AppBotController<NSFWBot> {
       // Получить Название канала
       const infoChannel = await this.bot.getChannelInfo(channel);
       // Получить название праздника
-      const holidayMessage = await getHolydayMessage();
+      const holidayMessage = await getHolidayMessage();
       // Если название канала некорректное или его нет, то найти случайный канал
       if (!channel || !infoChannel.correct) {
         infoChannel.name = (await this.bot.db.getRandomChannel()).name;
@@ -105,7 +102,7 @@ export default class FridayController extends AppBotController<NSFWBot> {
       // Получить Название канала
       const infoChannel = await this.bot.getChannelInfo(channel);
       // Получить название праздника
-      const holidayMessage = await getHolydayMessage();
+      const holidayMessage = await getHolidayMessage();
       // Отправить альбомы в телеграм, каждому клиенту
       const url = `${BASE_URL}/api/botFriday/postListVideo`;
       for (const id of chatIds) {
@@ -429,21 +426,5 @@ export default class FridayController extends AppBotController<NSFWBot> {
       });
     }
     res.status(200).json({ status });
-  });
-
-  import = asyncHandler(async (req, res) => {
-    const db = await getConnection();
-
-    const promises = HOLYDAYS.map(({ day, holidays, month }) =>
-      db.collection("holidays", {}).insertOne({
-        day,
-        month,
-        holidays: [...new Set(holidays)],
-      })
-    );
-
-    await Promise.all(promises);
-
-    res.status(200).json({ status: promises.length });
   });
 }

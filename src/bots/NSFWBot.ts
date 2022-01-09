@@ -10,7 +10,7 @@ import type Reddit from "../lib/reddit";
 import type ModelNsfw from "../lib/modelNsfw";
 
 import TelegramBot from "../lib/telegramBot";
-import { getHolydayMessage } from "../lib/isFriDay";
+import { getHolidayMessage } from "../lib/isFriDay";
 
 /**
  * Телеграм-бот для nsfw
@@ -365,7 +365,7 @@ ${e}`
         parse_mode: "Markdown",
       });
     } else {
-      const holiday = await getHolydayMessage();
+      const holiday = await getHolidayMessage();
       if (holiday) {
         await this.bot.sendMessage(chatId, holiday, {
           parse_mode: "Markdown",
